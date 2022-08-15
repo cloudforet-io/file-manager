@@ -1,0 +1,1 @@
+from spaceone.file_manager.connector.aws_s3_connector import AWSS3Connector

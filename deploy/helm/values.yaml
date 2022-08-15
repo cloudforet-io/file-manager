@@ -1,0 +1,123 @@
+###############################
+# DEFAULT 
+###############################
+enabled: true
+developer: false
+grpc: true
+scheduler: false
+worker: false
+rest: false
+name: secret
+replicas: 1
+image:
+    name: spaceone/file-manager
+    version: latest
+imagePullPolicy: IfNotPresent
+
+# Overwrite database
+database: {}
+
+# Overwrite application config
+#application: {}
+application:
+    BACKEND: AWSS3Connector
+    CONNECTORS:
+        AWSS3Connector:
+            aws_access_key_id: my_key
+            aws_secret_access_key: my_secret_key
+            reigon_name: default_region
+            bucket_name: default_bucket
+
+#    BACKEND: ConsulConnector
+#    CONNECTORS:
+#      ConsulConnector:
+#          host: spaceone-consul-server
+#          port: 8500
+          
+# Overwrite scheduler config
+application_scheduler: {}
+# Overwrite worker config
+application_worker: {}
+
+##########################
+# local sidecar
+##########################
+#sidecar:
+
+
+
+##########################
+# Local volumes
+##########################
+volumes:
+  - name: timezone
+    hostPath:
+        path: /usr/share/zoneinfo/Asia/Seoul
+  - name: log-volume
+    emptyDir: {}
+
+#######################
+# global variable
+#######################
+global:
+    shared: {}
+    backend:
+      sidecar: []
+#        - name: mongos
+#          image: mongo:4.4.0-bionic
+#          command: [ 'mongos', '--config', '/mnt/mongos.yml', '--bind_ip_all' ]
+#          volumeMounts:
+#            - name: mongos-conf
+#              mountPath: /mnt/mongos.yml
+#              subPath: mongos.yml
+#              readOnly: true
+#            - name: mongo-shard-key
+#              mountPath: /opt/mongos/mongo-shard.pem
+#              subPath: mongo-shard.pem
+#              readOnly: true
+#
+      volumes: []
+#        - name: mongo-shard-key
+#          secret:
+#              defaultMode: 0400
+#              secretName: mongo-shard-key
+#        - name: mongos-conf
+#          configMap:
+#              name: mongos-conf
+#        - name: shared-conf
+#          configMap:
+#              name: shared-conf
+
+    
+# Service
+service:
+    grpc:
+        type: ClusterIP
+        annotations:
+            nil: nil
+        ports:
+            - name: grpc
+              port: 50051
+              targetPort: 50051
+              protocol: TCP
+
+################################
+# volumeMount per deployment
+################################
+volumeMounts:
+    application_grpc: []
+    application_rest: []
+    application_scheduler: []
+    application_worker: []
+
+####################################
+# pod spec (append more pod spec)
+# example nodeSelect
+#
+# pod:
+#   spec:
+#     nodeSelector:
+#       application: my-node-group
+####################################
+pod:
+    spec: {}

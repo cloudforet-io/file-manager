@@ -1,0 +1,6 @@
+spaceone-core
+spaceone-api
+mongoengine
+mongomock
+redis
+boto3
