@@ -1,7 +1,7 @@
 REMOTE_URL:
-- file:///opt/spaceone/secret/config/database.yaml
-- file:///opt/spaceone/secret/config/shared.yaml
-- file:///opt/spaceone/secret/config/application.yaml
+- file:///opt/spaceone/file-manager/config/database.yaml
+- file:///opt/spaceone/file-manager/config/shared.yaml
+- file:///opt/spaceone/file-manager/config/application.yaml
 GLOBAL:
   MAX_WORKERS: 1000
   DATABASES:
