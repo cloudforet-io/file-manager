@@ -22,7 +22,7 @@ class FileService(BaseService):
         self.file_mgr: FileManager = self.locator.get_manager('FileManager')
 
     @transaction(append_meta={
-        'authorization.scope': 'PROJECT',
+        'authorization.scope': 'DOMAIN_OR_PROJECT',
         'authorization.require_project_id': True
     })
     @check_required(['name', 'domain_id'])
@@ -62,7 +62,7 @@ class FileService(BaseService):
 
         return file_vo, upload_url, upload_options
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
     @check_required(['file_id', 'domain_id'])
     def update(self, params):
         """ Update file
@@ -98,7 +98,7 @@ class FileService(BaseService):
 
         return file_vo
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
     @check_required(['file_id', 'domain_id'])
     def delete(self, params):
         """ Delete file
@@ -123,7 +123,7 @@ class FileService(BaseService):
 
         self.file_mgr.delete_file_by_vo(file_vo)
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
     @check_required(['file_id', 'domain_id'])
     def get_download_url(self, params):
         """ Get download url of file
@@ -155,7 +155,7 @@ class FileService(BaseService):
 
         return file_vo, download_url
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
     @check_required(['file_id', 'domain_id'])
     def get(self, params):
         """ Get file
@@ -173,10 +173,7 @@ class FileService(BaseService):
 
         return self.file_mgr.get_file(params['file_id'], params['domain_id'], params.get('only'))
 
-    @transaction(append_meta={
-        'authorization.scope': 'PROJECT',
-        'mutation.append_parameter': {'user_projects': 'authorization.projects'}
-    })
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
     @check_required(['domain_id'])
     @append_query_filter(['file_id', 'name', 'state', 'scope', 'file_type', 'resource_type', 'resource_id',
                           'project_id', 'domain_id', 'user_projects'])
@@ -207,7 +204,7 @@ class FileService(BaseService):
         query = params.get('query', {})
         return self.file_mgr.list_files(query)
 
-    @transaction
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
     @check_required(['query', 'domain_id'])
     @append_query_filter(['domain_id'])
     @append_keyword_filter(['file_id', 'name'])
