@@ -7,7 +7,7 @@ grpc: true
 scheduler: false
 worker: false
 rest: false
-name: secret
+name: file-manager
 replicas: 1
 image:
     name: spaceone/file-manager
