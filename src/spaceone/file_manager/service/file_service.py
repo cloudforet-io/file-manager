@@ -1,10 +1,8 @@
 import logging
 
-from spaceone.core import cache
 from spaceone.core.service import *
 from spaceone.file_manager.error import *
 from spaceone.file_manager.model.file_model import File
-from spaceone.file_manager.manager.identity_manager import IdentityManager
 from spaceone.file_manager.manager.file_manager import FileManager
 from spaceone.file_manager.manager.file_connector_manager import FileConnectorManager
 
@@ -22,10 +20,10 @@ class FileService(BaseService):
         self.file_mgr: FileManager = self.locator.get_manager('FileManager')
 
     @transaction(append_meta={
-        'authorization.scope': 'DOMAIN_OR_PROJECT',
-        'authorization.require_project_id': True
+        'authorization.scope': 'PUBLIC_OR_DOMAIN_ID',
+        'authorization.require_domain_id': True
     })
-    @check_required(['name', 'domain_id'])
+    @check_required(['name'])
     def add(self, params):
         """ Add file
 
@@ -35,23 +33,23 @@ class FileService(BaseService):
                 'tags': 'dict',
                 'reference': 'dict',
                 'project_id': 'str',
-                'domain_id': 'str
+                'domain_id': 'str,
+                'user_id': 'str', // from meta
+                'user_domain_id': 'str' // from meta
             }
 
         Returns:
             file_vo
         """
 
-        project_id = params.get('project_id')
         domain_id = params['domain_id']
+        params['user_id'] = self.transaction.get_meta('user_id')
+        params['user_domain_id'] = self.transaction.get_meta('domain_id')
 
-        identity_mgr: IdentityManager = self.locator.get_manager('IdentityManager')
-
-        if project_id:
-            identity_mgr.get_project(project_id, domain_id)
-            params['scope'] = 'PROJECT'
+        if domain_id:
+            params['scope'] = 'DOMAIN'
         else:
-            params['scope'] = 'GLOBAL'
+            params['scope'] = 'PUBLIC'
 
         params['file_type'] = self._get_file_type(params['name'])
 
@@ -62,8 +60,10 @@ class FileService(BaseService):
 
         return file_vo, upload_url, upload_options
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
-    @check_required(['file_id', 'domain_id'])
+    @transaction(append_meta={
+        'authorization.scope': 'PUBLIC_OR_DOMAIN'
+    })
+    @check_required(['file_id'])
     def update(self, params):
         """ Update file
 
@@ -72,76 +72,72 @@ class FileService(BaseService):
                 'file_id': 'str',
                 'tags': 'dict',
                 'reference': 'dict',
-                'project_id': 'str',
-                'domain_id': 'str'
+                'domain_id': 'str',
+                'user_domains': 'list' // from meta
             }
 
         Returns:
             file_vo
         """
 
-        domain_id = params['domain_id']
         file_id = params['file_id']
-        project_id = params.get('project_id')
+        user_domains = self.transaction.get_meta('user_domains')
 
-        identity_mgr: IdentityManager = self.locator.get_manager('IdentityManager')
-
-        file_vo: File = self.file_mgr.get_file(file_id, domain_id)
-
-        if project_id:
-            if file_vo.scope == 'GLOBAL':
-                raise ERROR_CHANGE_PROJECT()
-            else:
-                identity_mgr.get_project(project_id, domain_id)
-
+        file_vo: File = self.file_mgr.get_file(file_id, user_domains)
         file_vo = self.file_mgr.update_file_by_vo(params, file_vo)
 
         return file_vo
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
-    @check_required(['file_id', 'domain_id'])
+    @transaction(append_meta={
+        'authorization.scope': 'PUBLIC_OR_DOMAIN'
+    })
+    @check_required(['file_id'])
     def delete(self, params):
         """ Delete file
 
         Args:
             params (dict): {
                 'file_id': 'str',
-                'domain_id': 'str'
+                'domain_id': 'str',
+                'user_domains': 'list' // from meta
             }
 
         Returns:
             None
         """
 
-        domain_id = params['domain_id']
         file_id = params['file_id']
+        user_domains = self.transaction.get_meta('user_domains')
 
-        file_vo: File = self.file_mgr.get_file(file_id, domain_id)
+        file_vo: File = self.file_mgr.get_file(file_id, user_domains)
 
         file_conn_mgr: FileConnectorManager = self.locator.get_manager('FileConnectorManager')
         file_conn_mgr.delete_file(file_id, file_vo.name)
 
         self.file_mgr.delete_file_by_vo(file_vo)
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
-    @check_required(['file_id', 'domain_id'])
+    @transaction(append_meta={
+        'authorization.scope': 'PUBLIC_OR_DOMAIN'
+    })
+    @check_required(['file_id'])
     def get_download_url(self, params):
         """ Get download url of file
 
         Args:
             params (dict): {
                 'file_id': 'str',
-                'domain_id': 'str'
+                'domain_id': 'str',
+                'user_domains': 'list' // from meta
             }
 
         Returns:
             file_data (dict)
         """
 
-        domain_id = params['domain_id']
         file_id = params['file_id']
+        user_domains = self.transaction.get_meta('user_domains')
 
-        file_vo: File = self.file_mgr.get_file(file_id, domain_id)
+        file_vo: File = self.file_mgr.get_file(file_id, user_domains)
 
         file_conn_mgr: FileConnectorManager = self.locator.get_manager('FileConnectorManager')
 
@@ -151,12 +147,14 @@ class FileService(BaseService):
 
             file_vo = self.file_mgr.update_file_by_vo({'state': 'DONE'}, file_vo)
 
-        download_url = file_conn_mgr.get_download_url(file_id, file_vo.name, domain_id)
+        download_url = file_conn_mgr.get_download_url(file_id, file_vo.name, file_vo.domain_id)
 
         return file_vo, download_url
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
-    @check_required(['file_id', 'domain_id'])
+    @transaction(append_meta={
+        'authorization.scope': 'PUBLIC_OR_DOMAIN'
+    })
+    @check_required(['file_id'])
     def get(self, params):
         """ Get file
 
@@ -171,12 +169,16 @@ class FileService(BaseService):
             file_vo
         """
 
-        return self.file_mgr.get_file(params['file_id'], params['domain_id'], params.get('only'))
+        file_id = params['file_id']
+        user_domains = self.transaction.get_meta('user_domains')
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
-    @check_required(['domain_id'])
+        return self.file_mgr.get_file(file_id, user_domains, params.get('only'))
+
+    @transaction(append_meta={
+        'authorization.scope': 'PUBLIC_OR_DOMAIN'
+    })
     @append_query_filter(['file_id', 'name', 'state', 'scope', 'file_type', 'resource_type', 'resource_id',
-                          'project_id', 'domain_id', 'user_projects'])
+                          'user_domain_id', 'domain_id', 'user_domains'])
     @append_keyword_filter(['file_id', 'name'])
     def list(self, params):
         """ List files
@@ -190,10 +192,10 @@ class FileService(BaseService):
                 'file_type': 'str',
                 'resource_type': 'str',
                 'resource_id': 'str',
-                'project_id': 'str',
+                'user_domain_id': 'str',
                 'domain_id': 'str',
                 'query': 'dict (spaceone.api.core.v1.Query)',
-                'user_projects': 'list', // from meta
+                'user_domains': 'list', // from meta
             }
 
         Returns:
@@ -204,16 +206,19 @@ class FileService(BaseService):
         query = params.get('query', {})
         return self.file_mgr.list_files(query)
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_PROJECT'})
-    @check_required(['query', 'domain_id'])
-    @append_query_filter(['domain_id'])
+    @transaction(append_meta={
+        'authorization.scope': 'PUBLIC_OR_DOMAIN'
+    })
+    @check_required(['query'])
+    @append_query_filter(['domain_id', 'user_domains'])
     @append_keyword_filter(['file_id', 'name'])
     def stat(self, params):
         """
         Args:
             params (dict): {
                 'domain_id': 'str',
-                'query': 'dict (spaceone.api.core.v1.StatisticsQuery)'
+                'query': 'dict (spaceone.api.core.v1.StatisticsQuery)',
+                'user_domains': 'list', // from meta
             }
 
         Returns:

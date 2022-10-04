@@ -26,7 +26,6 @@ class FileConnectorManager(BaseManager):
 
     @cache.cacheable(key='file-manager:download-url:{domain_id}:{file_id}', expire=1800)
     def get_download_url(self, file_id, file_name, domain_id):
-        print('get_download_url')
         download_url = self.file_conn.get_download_url(file_id, file_name)
         return download_url
 

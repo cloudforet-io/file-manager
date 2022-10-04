@@ -27,17 +27,18 @@ def FileInfo(file_vo: File, minimal=False, upload_url=None, upload_options=None,
         'file_id': file_vo.file_id,
         'name': file_vo.name,
         'state': file_vo.state,
-        'reference': file_vo.reference
+        'reference': file_vo.reference,
+        'scope': file_vo.scope,
+        'domain_id': file_vo.domain_id
     }
 
     if minimal is False:
         info.update({
-            'scope': file_vo.scope,
             'file_type': file_vo.file_type,
             'tags': change_struct_type(file_vo.tags),
             'reference': FileReferenceInfo(file_vo.reference),
-            'project_id': file_vo.project_id,
-            'domain_id': file_vo.domain_id,
+            'user_id': file_vo.user_id,
+            'user_domain_id': file_vo.user_domain_id,
             'created_at': utils.datetime_to_iso8601(file_vo.created_at)
         })
 
