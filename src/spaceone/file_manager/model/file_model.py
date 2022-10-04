@@ -22,16 +22,16 @@ class File(MongoModel):
     file_type = StringField(max_length=255, null=True, default=None)
     tags = DictField()
     reference = EmbeddedDocumentField(FileReference, null=True, default=None)
-    project_id = StringField(max_length=40, null=True, default=None)
-    domain_id = StringField(max_length=255)
+    domain_id = StringField(max_length=40, null=True, default=None)
+    user_id = StringField(max_length=40)
+    user_domain_id = StringField(max_length=40)
     created_at = DateTimeField(auto_now_add=True)
 
     meta = {
         'updatable_fields': [
             'state',
             'tags',
-            'reference',
-            'project_id'
+            'reference'
         ],
         'minimal_fields': [
             'file_id',
@@ -40,9 +40,9 @@ class File(MongoModel):
             'reference'
         ],
         'change_query_keys': {
-            'user_projects': 'project_id',
             'resource_type': 'reference.resource_type',
-            'resource_id': 'reference.resource_id'
+            'resource_id': 'reference.resource_id',
+            'user_domains': 'domain_id'
         },
         'ordering': [
             'name'
@@ -53,7 +53,8 @@ class File(MongoModel):
             'file_type',
             'reference.resource_type',
             'reference.resource_id',
-            'project_id',
-            'domain_id'
+            'domain_id',
+            'user_id',
+            'user_domain_id'
         ]
     }
