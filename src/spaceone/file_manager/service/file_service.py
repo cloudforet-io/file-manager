@@ -20,7 +20,7 @@ class FileService(BaseService):
         self.file_mgr: FileManager = self.locator.get_manager('FileManager')
 
     @transaction(append_meta={
-        'authorization.scope': 'PUBLIC_OR_DOMAIN_ID',
+        'authorization.scope': 'PUBLIC_OR_DOMAIN',
         'authorization.require_domain_id': True
     })
     @check_required(['name'])
