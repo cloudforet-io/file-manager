@@ -24,7 +24,7 @@ class FileManager(BaseManager):
         return file_vo
 
     def update_file(self, params):
-        self.update_file_by_vo(params, self.get_file(params['file_id'], params['domain_id']))
+        self.update_file_by_vo(params, self.get_file(params['file_id']))
 
     def update_file_by_vo(self, params, file_vo):
         def _rollback(old_data):
@@ -42,8 +42,11 @@ class FileManager(BaseManager):
     def delete_file_by_vo(file_vo):
         file_vo.delete()
 
-    def get_file(self, file_id, domain_id, only=None):
-        return self.file_model.get(file_id=file_id, domain_id=domain_id, only=only)
+    def get_file(self, file_id, user_domains, only=None):
+        if user_domains:
+            return self.file_model.get(file_id=file_id, domain_id=user_domains, only=only)
+        else:
+            return self.file_model.get(file_id=file_id, only=only)
 
     def filter_files(self, **conditions):
         return self.file_model.filter(**conditions)
