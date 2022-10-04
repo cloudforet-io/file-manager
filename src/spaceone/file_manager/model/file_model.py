@@ -18,7 +18,7 @@ class File(MongoModel):
     file_id = StringField(max_length=40, generate_id='file', unique=True)
     name = StringField(max_length=255, required=True)
     state = StringField(max_length=40, choices=('PENDING', 'DONE'), default='PENDING')
-    scope = StringField(max_length=40, choices=('GLOBAL', 'PROJECT'), required=True)
+    scope = StringField(max_length=40, choices=('PUBLIC', 'DOMAIN'), required=True)
     file_type = StringField(max_length=255, null=True, default=None)
     tags = DictField()
     reference = EmbeddedDocumentField(FileReference, null=True, default=None)
