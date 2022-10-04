@@ -42,7 +42,7 @@ class FileService(BaseService):
             file_vo
         """
 
-        domain_id = params['domain_id']
+        domain_id = params.get('domain_id')
         params['user_id'] = self.transaction.get_meta('user_id')
         params['user_domain_id'] = self.transaction.get_meta('domain_id')
 
