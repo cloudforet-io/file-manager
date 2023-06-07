@@ -10,8 +10,8 @@ _LOGGER = logging.getLogger(__name__)
 
 class AWSS3Connector(FileBaseConnector):
 
-    def __init__(self, transaction, config):
-        super().__init__(transaction, config)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.client = None
         self.bucket_name = None
