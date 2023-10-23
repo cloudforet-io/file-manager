@@ -47,8 +47,10 @@ class AWSS3Connector(FileBaseConnector):
 
     def get_download_url(self, file_id, file_name):
         object_name = self._generate_object_name(file_id, file_name)
+        expires_in = self.config.get('expires_in', 86400)
         response = self.client.generate_presigned_url('get_object',
-                                                      Params={'Bucket': self.bucket_name, 'Key': object_name})
+                                                      Params={'Bucket': self.bucket_name, 'Key': object_name},
+                                                      ExpiresIn=expires_in)
 
         return response
 
