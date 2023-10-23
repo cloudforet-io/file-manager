@@ -24,6 +24,7 @@ BACKEND = 'AWSS3Connector'
 CONNECTORS = {
     'AWSS3Connector': {
         'backend': 'spaceone.file_manager.connector.aws_s3_connector.AWSS3Connector',
+        'expires_in': 86400,
         'aws_access_key_id': '<optional>',
         'aws_secret_access_key': '<optional>',
         'region_name': '<required>',
