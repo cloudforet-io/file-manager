@@ -7,14 +7,13 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class FileManager(BaseManager):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.file_model: File = self.locator.get_model(File)
 
     def create_file(self, params):
         def _rollback(file_vo):
-            _LOGGER.info(f'[ROLLBACK] Delete file : {file_vo.name} ({file_vo.file_id})')
+            _LOGGER.info(f"[ROLLBACK] Delete file : {file_vo.name} ({file_vo.file_id})")
             file_vo.delete()
 
         file_vo: File = self.file_model.create(params)
@@ -24,11 +23,13 @@ class FileManager(BaseManager):
         return file_vo
 
     def update_file(self, params):
-        self.update_file_by_vo(params, self.get_file(params['file_id']))
+        self.update_file_by_vo(params, self.get_file(params["file_id"]))
 
     def update_file_by_vo(self, params, file_vo):
         def _rollback(old_data):
-            _LOGGER.info(f'[ROLLBACK] Revert Data : {old_data["name"]} ({old_data["file_id"]})')
+            _LOGGER.info(
+                f'[ROLLBACK] Revert Data : {old_data["name"]} ({old_data["file_id"]})'
+            )
             file_vo.update(old_data)
 
         self.transaction.add_rollback(_rollback, file_vo.to_dict())
@@ -44,7 +45,9 @@ class FileManager(BaseManager):
 
     def get_file(self, file_id, user_domains, only=None):
         if user_domains:
-            return self.file_model.get(file_id=file_id, domain_id=user_domains, only=only)
+            return self.file_model.get(
+                file_id=file_id, domain_id=user_domains, only=only
+            )
         else:
             return self.file_model.get(file_id=file_id, only=only)
 

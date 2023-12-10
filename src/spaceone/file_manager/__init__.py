@@ -1,1 +1,1 @@
-name = 'file_manager'
+name = "file_manager"

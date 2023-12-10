@@ -23,9 +23,9 @@ class FileService(BaseService):
         self.file_mgr: FileManager = self.locator.get_manager(FileManager)
 
     @transaction(scope="workspace_member:write")
-    @check_required(['name'])
+    @check_required(["name"])
     def add(self, params):
-        """ Add file
+        """Add file
 
         Args:
             params (dict): {
@@ -42,28 +42,32 @@ class FileService(BaseService):
             file_vo
         """
 
-        domain_id = params.get('domain_id')
-        params['user_id'] = self.transaction.get_meta('user_id')
-        params['user_domain_id'] = self.transaction.get_meta('domain_id')
+        domain_id = params.get("domain_id")
+        params["user_id"] = self.transaction.get_meta("user_id")
+        params["user_domain_id"] = self.transaction.get_meta("domain_id")
 
         if domain_id:
-            params['scope'] = 'DOMAIN'
+            params["scope"] = "DOMAIN"
         else:
-            params['scope'] = 'PUBLIC'
+            params["scope"] = "PUBLIC"
 
-        params['file_type'] = self._get_file_type(params['name'])
+        params["file_type"] = self._get_file_type(params["name"])
 
         file_vo: File = self.file_mgr.create_file(params)
 
-        file_conn_mgr: FileConnectorManager = self.locator.get_manager(FileConnectorManager)
-        upload_url, upload_options = file_conn_mgr.get_upload_url(file_vo.file_id, file_vo.name)
+        file_conn_mgr: FileConnectorManager = self.locator.get_manager(
+            FileConnectorManager
+        )
+        upload_url, upload_options = file_conn_mgr.get_upload_url(
+            file_vo.file_id, file_vo.name
+        )
 
         return file_vo, upload_url, upload_options
 
     @transaction(scope="workspace_member:write")
-    @check_required(['file_id'])
+    @check_required(["file_id"])
     def update(self, params):
-        """ Update file
+        """Update file
 
         Args:
             params (dict): {
@@ -78,8 +82,8 @@ class FileService(BaseService):
             file_vo
         """
 
-        file_id = params['file_id']
-        user_domains = self.transaction.get_meta('user_domains')
+        file_id = params["file_id"]
+        user_domains = self.transaction.get_meta("user_domains")
 
         file_vo: File = self.file_mgr.get_file(file_id, user_domains)
         file_vo = self.file_mgr.update_file_by_vo(params, file_vo)
@@ -87,9 +91,9 @@ class FileService(BaseService):
         return file_vo
 
     @transaction(scope="workspace_member:write")
-    @check_required(['file_id'])
+    @check_required(["file_id"])
     def delete(self, params):
-        """ Delete file
+        """Delete file
 
         Args:
             params (dict): {
@@ -102,20 +106,22 @@ class FileService(BaseService):
             None
         """
 
-        file_id = params['file_id']
-        user_domains = self.transaction.get_meta('user_domains')
+        file_id = params["file_id"]
+        user_domains = self.transaction.get_meta("user_domains")
 
         file_vo: File = self.file_mgr.get_file(file_id, user_domains)
 
-        file_conn_mgr: FileConnectorManager = self.locator.get_manager(FileConnectorManager)
+        file_conn_mgr: FileConnectorManager = self.locator.get_manager(
+            FileConnectorManager
+        )
         file_conn_mgr.delete_file(file_id, file_vo.name)
 
         self.file_mgr.delete_file_by_vo(file_vo)
 
     @transaction(scope="workspace_member:read")
-    @check_required(['file_id'])
+    @check_required(["file_id"])
     def get_download_url(self, params):
-        """ Get download url of file
+        """Get download url of file
 
         Args:
             params (dict): {
@@ -128,27 +134,31 @@ class FileService(BaseService):
             file_data (dict)
         """
 
-        file_id = params['file_id']
-        user_domains = self.transaction.get_meta('user_domains')
+        file_id = params["file_id"]
+        user_domains = self.transaction.get_meta("user_domains")
 
         file_vo: File = self.file_mgr.get_file(file_id, user_domains)
 
-        file_conn_mgr: FileConnectorManager = self.locator.get_manager(FileConnectorManager)
+        file_conn_mgr: FileConnectorManager = self.locator.get_manager(
+            FileConnectorManager
+        )
 
-        if file_vo.state == 'PENDING':
+        if file_vo.state == "PENDING":
             if not file_conn_mgr.check_file(file_id, file_vo.name):
                 raise ERROR_FILE_UPLOAD_STATE()
 
-            file_vo = self.file_mgr.update_file_by_vo({'state': 'DONE'}, file_vo)
+            file_vo = self.file_mgr.update_file_by_vo({"state": "DONE"}, file_vo)
 
-        download_url = file_conn_mgr.get_download_url(file_id, file_vo.name, file_vo.domain_id)
+        download_url = file_conn_mgr.get_download_url(
+            file_id, file_vo.name, file_vo.domain_id
+        )
 
         return file_vo, download_url
 
     @transaction(scope="workspace_member:read")
-    @check_required(['file_id'])
+    @check_required(["file_id"])
     def get(self, params):
-        """ Get file
+        """Get file
 
         Args:
             params (dict): {
@@ -161,17 +171,29 @@ class FileService(BaseService):
             file_vo
         """
 
-        file_id = params['file_id']
-        user_domains = self.transaction.get_meta('user_domains')
+        file_id = params["file_id"]
+        user_domains = self.transaction.get_meta("user_domains")
 
-        return self.file_mgr.get_file(file_id, user_domains, params.get('only'))
+        return self.file_mgr.get_file(file_id, user_domains, params.get("only"))
 
     @transaction(scope="workspace_member:read")
-    @append_query_filter(['file_id', 'name', 'state', 'scope', 'file_type', 'resource_type', 'resource_id',
-                          'user_domain_id', 'domain_id', 'user_domains'])
-    @append_keyword_filter(['file_id', 'name'])
+    @append_query_filter(
+        [
+            "file_id",
+            "name",
+            "state",
+            "scope",
+            "file_type",
+            "resource_type",
+            "resource_id",
+            "user_domain_id",
+            "domain_id",
+            "user_domains",
+        ]
+    )
+    @append_keyword_filter(["file_id", "name"])
     def list(self, params):
-        """ List files
+        """List files
 
         Args:
             params (dict): {
@@ -193,13 +215,13 @@ class FileService(BaseService):
             total_count (int)
         """
 
-        query = params.get('query', {})
+        query = params.get("query", {})
         return self.file_mgr.list_files(query)
 
     @transaction(scope="workspace_member:read")
-    @check_required(['query'])
-    @append_query_filter(['domain_id', 'user_domains'])
-    @append_keyword_filter(['file_id', 'name'])
+    @check_required(["query"])
+    @append_query_filter(["domain_id", "user_domains"])
+    @append_keyword_filter(["file_id", "name"])
     def stat(self, params):
         """
         Args:
@@ -214,12 +236,12 @@ class FileService(BaseService):
 
         """
 
-        query = params.get('query', {})
+        query = params.get("query", {})
         return self.file_mgr.stat_files(query)
 
     @staticmethod
     def _get_file_type(file_name):
-        file_name_split = file_name.split('.')
+        file_name_split = file_name.split(".")
         if len(file_name_split) == 1:
             return None
         else:

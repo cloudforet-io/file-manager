@@ -14,7 +14,9 @@ class File(BaseAPI, file_pb2_grpc.FileServicer):
 
         with self.locator.get_service(FileService, metadata) as file_service:
             file_vo, upload_url, upload_options = file_service.add(params)
-            return self.locator.get_info(FileInfo, file_vo, upload_url=upload_url, upload_options=upload_options)
+            return self.locator.get_info(
+                FileInfo, file_vo, upload_url=upload_url, upload_options=upload_options
+            )
 
     def update(self, request, context):
         params, metadata = self.parse_request(request, context)
@@ -47,8 +49,9 @@ class File(BaseAPI, file_pb2_grpc.FileServicer):
 
         with self.locator.get_service(FileService, metadata) as file_service:
             file_vos, total_count = file_service.list(params)
-            return self.locator.get_info(FilesInfo, file_vos, total_count,
-                                         minimal=self.get_minimal(params))
+            return self.locator.get_info(
+                FilesInfo, file_vos, total_count, minimal=self.get_minimal(params)
+            )
 
     def stat(self, request, context):
         params, metadata = self.parse_request(request, context)

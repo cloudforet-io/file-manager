@@ -3,7 +3,6 @@ from spaceone.core.connector import BaseConnector
 
 
 class FileBaseConnector(BaseConnector):
-
     @abc.abstractmethod
     def get_upload_url(self, file_id: str, file_name: str) -> [str, dict]:
         pass

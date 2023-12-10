@@ -15,10 +15,10 @@ class FileReference(EmbeddedDocument):
 
 
 class File(MongoModel):
-    file_id = StringField(max_length=40, generate_id='file', unique=True)
+    file_id = StringField(max_length=40, generate_id="file", unique=True)
     name = StringField(max_length=255, required=True)
-    state = StringField(max_length=40, choices=('PENDING', 'DONE'), default='PENDING')
-    scope = StringField(max_length=40, choices=('PUBLIC', 'DOMAIN'), required=True)
+    state = StringField(max_length=40, choices=("PENDING", "DONE"), default="PENDING")
+    scope = StringField(max_length=40, choices=("PUBLIC", "DOMAIN"), required=True)
     file_type = StringField(max_length=255, null=True, default=None)
     tags = DictField()
     reference = EmbeddedDocumentField(FileReference, null=True, default=None)
@@ -28,33 +28,22 @@ class File(MongoModel):
     created_at = DateTimeField(auto_now_add=True)
 
     meta = {
-        'updatable_fields': [
-            'state',
-            'tags',
-            'reference'
-        ],
-        'minimal_fields': [
-            'file_id',
-            'name',
-            'state',
-            'reference'
-        ],
-        'change_query_keys': {
-            'resource_type': 'reference.resource_type',
-            'resource_id': 'reference.resource_id',
-            'user_domains': 'domain_id'
+        "updatable_fields": ["state", "tags", "reference"],
+        "minimal_fields": ["file_id", "name", "state", "reference"],
+        "change_query_keys": {
+            "resource_type": "reference.resource_type",
+            "resource_id": "reference.resource_id",
+            "user_domains": "domain_id",
         },
-        'ordering': [
-            'name'
+        "ordering": ["name"],
+        "indexes": [
+            "state",
+            "scope",
+            "file_type",
+            "reference.resource_type",
+            "reference.resource_id",
+            "domain_id",
+            "user_id",
+            "user_domain_id",
         ],
-        'indexes': [
-            'state',
-            'scope',
-            'file_type',
-            'reference.resource_type',
-            'reference.resource_id',
-            'domain_id',
-            'user_id',
-            'user_domain_id'
-        ]
     }

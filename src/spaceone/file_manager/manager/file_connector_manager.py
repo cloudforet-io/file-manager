@@ -9,22 +9,21 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class FileConnectorManager(BaseManager):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        backend = config.get_global('BACKEND', 'FileConnectorManager')
+        backend = config.get_global("BACKEND", "FileConnectorManager")
         try:
-            _LOGGER.debug(f'[FileConnectorManager] Create {backend}')
+            _LOGGER.debug(f"[FileConnectorManager] Create {backend}")
             self.file_conn: FileBaseConnector = self.locator.get_connector(backend)
         except Exception as e:
-            _LOGGER.error(f'[FileConnectorManager] not defined backend {backend}')
+            _LOGGER.error(f"[FileConnectorManager] not defined backend {backend}")
             raise ERROR_NOT_DEFINED_FILE_BACKEND(backend=backend)
 
     def get_upload_url(self, file_id, file_name):
         upload_url, upload_options = self.file_conn.get_upload_url(file_id, file_name)
         return upload_url, upload_options
 
-    @cache.cacheable(key='file-manager:download-url:{domain_id}:{file_id}', expire=1800)
+    @cache.cacheable(key="file-manager:download-url:{domain_id}:{file_id}", expire=1800)
     def get_download_url(self, file_id, file_name, domain_id):
         download_url = self.file_conn.get_download_url(file_id, file_name)
         return download_url
