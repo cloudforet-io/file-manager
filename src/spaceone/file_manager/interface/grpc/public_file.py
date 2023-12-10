@@ -2,7 +2,7 @@ from spaceone.api.file_manager.v1 import file_pb2, file_pb2_grpc
 from spaceone.core.pygrpc import BaseAPI
 
 
-class File(BaseAPI, file_pb2_grpc.FileServicer):
+class PublicFile(BaseAPI, file_pb2_grpc.FileServicer):
 
     pb2 = file_pb2
     pb2_grpc = file_pb2_grpc
