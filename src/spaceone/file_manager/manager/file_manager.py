@@ -10,7 +10,7 @@ class FileManager(BaseManager):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.file_model: File = self.locator.get_model('File')
+        self.file_model: File = self.locator.get_model(File)
 
     def create_file(self, params):
         def _rollback(file_vo):

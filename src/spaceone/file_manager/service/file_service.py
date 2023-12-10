@@ -14,15 +14,15 @@ _LOGGER = logging.getLogger(__name__)
 @mutation_handler
 @event_handler
 class FileService(BaseService):
+    service = "file_manager"
+    resource = "File"
+    permission_group = "COMPOUND"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.file_mgr: FileManager = self.locator.get_manager('FileManager')
+        self.file_mgr: FileManager = self.locator.get_manager(FileManager)
 
-    @transaction(append_meta={
-        'authorization.scope': 'PUBLIC_OR_DOMAIN',
-        'authorization.require_domain_id': True
-    })
+    @transaction(scope="workspace_member:write")
     @check_required(['name'])
     def add(self, params):
         """ Add file
@@ -55,14 +55,12 @@ class FileService(BaseService):
 
         file_vo: File = self.file_mgr.create_file(params)
 
-        file_conn_mgr: FileConnectorManager = self.locator.get_manager('FileConnectorManager')
+        file_conn_mgr: FileConnectorManager = self.locator.get_manager(FileConnectorManager)
         upload_url, upload_options = file_conn_mgr.get_upload_url(file_vo.file_id, file_vo.name)
 
         return file_vo, upload_url, upload_options
 
-    @transaction(append_meta={
-        'authorization.scope': 'PUBLIC_OR_DOMAIN'
-    })
+    @transaction(scope="workspace_member:write")
     @check_required(['file_id'])
     def update(self, params):
         """ Update file
@@ -88,9 +86,7 @@ class FileService(BaseService):
 
         return file_vo
 
-    @transaction(append_meta={
-        'authorization.scope': 'PUBLIC_OR_DOMAIN'
-    })
+    @transaction(scope="workspace_member:write")
     @check_required(['file_id'])
     def delete(self, params):
         """ Delete file
@@ -111,14 +107,12 @@ class FileService(BaseService):
 
         file_vo: File = self.file_mgr.get_file(file_id, user_domains)
 
-        file_conn_mgr: FileConnectorManager = self.locator.get_manager('FileConnectorManager')
+        file_conn_mgr: FileConnectorManager = self.locator.get_manager(FileConnectorManager)
         file_conn_mgr.delete_file(file_id, file_vo.name)
 
         self.file_mgr.delete_file_by_vo(file_vo)
 
-    @transaction(append_meta={
-        'authorization.scope': 'PUBLIC_OR_DOMAIN'
-    })
+    @transaction(scope="workspace_member:read")
     @check_required(['file_id'])
     def get_download_url(self, params):
         """ Get download url of file
@@ -139,7 +133,7 @@ class FileService(BaseService):
 
         file_vo: File = self.file_mgr.get_file(file_id, user_domains)
 
-        file_conn_mgr: FileConnectorManager = self.locator.get_manager('FileConnectorManager')
+        file_conn_mgr: FileConnectorManager = self.locator.get_manager(FileConnectorManager)
 
         if file_vo.state == 'PENDING':
             if not file_conn_mgr.check_file(file_id, file_vo.name):
@@ -151,9 +145,7 @@ class FileService(BaseService):
 
         return file_vo, download_url
 
-    @transaction(append_meta={
-        'authorization.scope': 'PUBLIC_OR_DOMAIN'
-    })
+    @transaction(scope="workspace_member:read")
     @check_required(['file_id'])
     def get(self, params):
         """ Get file
@@ -174,9 +166,7 @@ class FileService(BaseService):
 
         return self.file_mgr.get_file(file_id, user_domains, params.get('only'))
 
-    @transaction(append_meta={
-        'authorization.scope': 'PUBLIC_OR_DOMAIN'
-    })
+    @transaction(scope="workspace_member:read")
     @append_query_filter(['file_id', 'name', 'state', 'scope', 'file_type', 'resource_type', 'resource_id',
                           'user_domain_id', 'domain_id', 'user_domains'])
     @append_keyword_filter(['file_id', 'name'])
@@ -206,9 +196,7 @@ class FileService(BaseService):
         query = params.get('query', {})
         return self.file_mgr.list_files(query)
 
-    @transaction(append_meta={
-        'authorization.scope': 'PUBLIC_OR_DOMAIN'
-    })
+    @transaction(scope="workspace_member:read")
     @check_required(['query'])
     @append_query_filter(['domain_id', 'user_domains'])
     @append_keyword_filter(['file_id', 'name'])
