@@ -6,4 +6,4 @@ _all_ = ["app"]
 
 app = GRPCServer()
 app.add_service(File)
-# app.add_service(PublicFile)
+app.add_service(PublicFile)

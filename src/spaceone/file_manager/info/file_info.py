@@ -1,16 +1,18 @@
 import logging
 import functools
+from typing import Union
 from spaceone.api.file_manager.v1 import file_pb2
 from spaceone.core.pygrpc.message_type import *
 from spaceone.core import utils
 from spaceone.file_manager.model.file_model import File, FileReference
 
-
 __all__ = ["FileInfo", "FilesInfo"]
 _LOGGER = logging.getLogger(__name__)
 
 
-def FileReferenceInfo(reference_vo: FileReference):
+def FileReferenceInfo(
+    reference_vo: FileReference,
+) -> Union[file_pb2.FileReference, None]:
     if reference_vo:
         info = {
             "resource_type": reference_vo.resource_type,
@@ -24,17 +26,17 @@ def FileReferenceInfo(reference_vo: FileReference):
 
 def FileInfo(
     file_vo: File,
-    minimal=False,
-    upload_url=None,
-    upload_options=None,
-    download_url=None,
-):
+    minimal: bool = False,
+    upload_url: str = None,
+    upload_options: str = None,
+    download_url: str = None,
+) -> file_pb2.FileInfo:
     info = {
         "file_id": file_vo.file_id,
         "name": file_vo.name,
         "state": file_vo.state,
-        "reference": file_vo.reference,
-        "scope": file_vo.scope,
+        "permission_group": file_vo.permission_group,
+        "workspace_id": file_vo.workspace_id,
         "domain_id": file_vo.domain_id,
     }
 
@@ -44,8 +46,6 @@ def FileInfo(
                 "file_type": file_vo.file_type,
                 "tags": change_struct_type(file_vo.tags),
                 "reference": FileReferenceInfo(file_vo.reference),
-                "user_id": file_vo.user_id,
-                "user_domain_id": file_vo.user_domain_id,
                 "created_at": utils.datetime_to_iso8601(file_vo.created_at),
             }
         )

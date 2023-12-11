@@ -1,3 +1,0 @@
-from spaceone.file_manager.manager.file_manager import FileManager
-from spaceone.file_manager.manager.file_connector_manager import FileConnectorManager
-from spaceone.file_manager.manager.identity_manager import IdentityManager

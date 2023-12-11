@@ -1,10 +1,12 @@
 import logging
+from typing import Tuple, Union
 
 from spaceone.core.service import *
 from spaceone.file_manager.error import *
 from spaceone.file_manager.model.file_model import File
 from spaceone.file_manager.manager.file_manager import FileManager
 from spaceone.file_manager.manager.file_connector_manager import FileConnectorManager
+from spaceone.file_manager.manager.identity_manager import IdentityManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,37 +23,33 @@ class FileService(BaseService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.file_mgr: FileManager = self.locator.get_manager(FileManager)
+        self.identity_mgr: IdentityManager = self.locator.get_manager(IdentityManager)
 
     @transaction(scope="workspace_member:write")
-    @check_required(["name"])
-    def add(self, params):
+    @check_required(["name", "permission_group", "domain_id"])
+    def add(self, params: dict) -> Tuple[File, str, dict]:
         """Add file
 
         Args:
             params (dict): {
-                'name': 'str',
+                'name': 'str',              # required
                 'tags': 'dict',
                 'reference': 'dict',
-                'project_id': 'str',
-                'domain_id': 'str,
-                'user_id': 'str', // from meta
-                'user_domain_id': 'str' // from meta
+                'permission_group',         # required
+                'workspace_id': 'str',
+                'domain_id': 'str'(meta)    # required
             }
 
         Returns:
             file_vo
         """
 
-        domain_id = params.get("domain_id")
-        params["user_id"] = self.transaction.get_meta("user_id")
-        params["user_domain_id"] = self.transaction.get_meta("domain_id")
-
-        if domain_id:
-            params["scope"] = "DOMAIN"
-        else:
-            params["scope"] = "PUBLIC"
-
         params["file_type"] = self._get_file_type(params["name"])
+
+        if params["permission_group"] == "WORKSPACE":
+            self.identity_mgr.get_workspace(params["workspace_id"], params["domain_id"])
+        else:
+            params["workspace_id"] = "*"
 
         file_vo: File = self.file_mgr.create_file(params)
 
@@ -65,41 +63,42 @@ class FileService(BaseService):
         return file_vo, upload_url, upload_options
 
     @transaction(scope="workspace_member:write")
-    @check_required(["file_id"])
-    def update(self, params):
+    @check_required(["file_id", "domain_id"])
+    def update(self, params: dict) -> File:
         """Update file
 
         Args:
             params (dict): {
-                'file_id': 'str',
+                'file_id': 'str',            # required
                 'tags': 'dict',
                 'reference': 'dict',
-                'domain_id': 'str',
-                'user_domains': 'list' // from meta
+                'workspace_id': 'str',
+                'domain_id': 'str'(meta)     # required
             }
 
         Returns:
             file_vo
         """
 
-        file_id = params["file_id"]
-        user_domains = self.transaction.get_meta("user_domains")
+        workspace_id = params.get("workspace_id")
+        domain_id = params["domain_id"]
 
-        file_vo: File = self.file_mgr.get_file(file_id, user_domains)
+        file_id = params["file_id"]
+        file_vo: File = self.file_mgr.get_file(file_id, workspace_id, domain_id)
         file_vo = self.file_mgr.update_file_by_vo(params, file_vo)
 
         return file_vo
 
     @transaction(scope="workspace_member:write")
-    @check_required(["file_id"])
-    def delete(self, params):
+    @check_required(["file_id", "domain_id"])
+    def delete(self, params: dict) -> None:
         """Delete file
 
         Args:
             params (dict): {
-                'file_id': 'str',
-                'domain_id': 'str',
-                'user_domains': 'list' // from meta
+                'file_id': 'str',           # required
+                'workspace_id': 'str',
+                'domain_id': 'str'(meta),   # required
             }
 
         Returns:
@@ -107,9 +106,10 @@ class FileService(BaseService):
         """
 
         file_id = params["file_id"]
-        user_domains = self.transaction.get_meta("user_domains")
+        workspace_id = params.get("workspace_id")
+        domain_id = params["domain_id"]
 
-        file_vo: File = self.file_mgr.get_file(file_id, user_domains)
+        file_vo: File = self.file_mgr.get_file(file_id, workspace_id, domain_id)
 
         file_conn_mgr: FileConnectorManager = self.locator.get_manager(
             FileConnectorManager
@@ -119,15 +119,15 @@ class FileService(BaseService):
         self.file_mgr.delete_file_by_vo(file_vo)
 
     @transaction(scope="workspace_member:read")
-    @check_required(["file_id"])
-    def get_download_url(self, params):
+    @check_required(["file_id", "domain_id"])
+    def get_download_url(self, params: dict) -> Tuple[File, Union[str, None]]:
         """Get download url of file
 
         Args:
             params (dict): {
-                'file_id': 'str',
-                'domain_id': 'str',
-                'user_domains': 'list' // from meta
+                'file_id': 'str',         # required
+                'workspace_id': 'str',
+                'domain_id': 'str',       # required
             }
 
         Returns:
@@ -135,9 +135,10 @@ class FileService(BaseService):
         """
 
         file_id = params["file_id"]
-        user_domains = self.transaction.get_meta("user_domains")
+        workspace_id = params.get("workspace_id")
+        domain_id = params["domain_id"]
 
-        file_vo: File = self.file_mgr.get_file(file_id, user_domains)
+        file_vo: File = self.file_mgr.get_file(file_id, workspace_id, domain_id)
 
         file_conn_mgr: FileConnectorManager = self.locator.get_manager(
             FileConnectorManager
@@ -157,14 +158,14 @@ class FileService(BaseService):
 
     @transaction(scope="workspace_member:read")
     @check_required(["file_id"])
-    def get(self, params):
+    def get(self, params: dict) -> File:
         """Get file
 
         Args:
             params (dict): {
-                'file_id': 'str',
-                'domain_id': 'str',
-                'only': 'list'
+                'file_id': 'str',          # required
+                'workspace_id': 'str',
+                'domain_id': 'str'(meta)   # required
             }
 
         Returns:
@@ -172,9 +173,10 @@ class FileService(BaseService):
         """
 
         file_id = params["file_id"]
-        user_domains = self.transaction.get_meta("user_domains")
+        workspace_id = params.get("workspace_id")
+        domain_id = params["domain_id"]
 
-        return self.file_mgr.get_file(file_id, user_domains, params.get("only"))
+        return self.file_mgr.get_file(file_id, workspace_id, domain_id)
 
     @transaction(scope="workspace_member:read")
     @append_query_filter(
@@ -182,32 +184,30 @@ class FileService(BaseService):
             "file_id",
             "name",
             "state",
-            "scope",
             "file_type",
             "resource_type",
             "resource_id",
-            "user_domain_id",
+            "permission_group",
+            "workspace_id",
             "domain_id",
-            "user_domains",
         ]
     )
     @append_keyword_filter(["file_id", "name"])
-    def list(self, params):
+    def list(self, params: dict) -> dict:
         """List files
 
         Args:
             params (dict): {
+                'query': 'dict (spaceone.api.core.v1.Query)',
                 'file_id': 'str',
                 'name': 'str',
                 'state': 'str',
-                'scope': 'str',
                 'file_type': 'str',
                 'resource_type': 'str',
                 'resource_id': 'str',
-                'user_domain_id': 'str',
-                'domain_id': 'str',
-                'query': 'dict (spaceone.api.core.v1.Query)',
-                'user_domains': 'list', // from meta
+                'permission_group': 'str',
+                'workspace_id': 'str',
+                'domain_id': 'str',                             # required
             }
 
         Returns:
@@ -220,15 +220,15 @@ class FileService(BaseService):
 
     @transaction(scope="workspace_member:read")
     @check_required(["query"])
-    @append_query_filter(["domain_id", "user_domains"])
+    @append_query_filter(["domain_id"])
     @append_keyword_filter(["file_id", "name"])
-    def stat(self, params):
+    def stat(self, params: dict) -> dict:
         """
         Args:
             params (dict): {
-                'domain_id': 'str',
-                'query': 'dict (spaceone.api.core.v1.StatisticsQuery)',
-                'user_domains': 'list', // from meta
+                'query': 'dict (spaceone.api.core.v1.StatisticsQuery)',  # required
+                'workspace_id': 'str',
+                'domain_id': 'str'(meta),                                # required
             }
 
         Returns:
@@ -240,7 +240,7 @@ class FileService(BaseService):
         return self.file_mgr.stat_files(query)
 
     @staticmethod
-    def _get_file_type(file_name):
+    def _get_file_type(file_name: str) -> Union[str, None]:
         file_name_split = file_name.split(".")
         if len(file_name_split) == 1:
             return None

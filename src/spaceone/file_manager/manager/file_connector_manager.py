@@ -24,12 +24,12 @@ class FileConnectorManager(BaseManager):
         return upload_url, upload_options
 
     @cache.cacheable(key="file-manager:download-url:{domain_id}:{file_id}", expire=1800)
-    def get_download_url(self, file_id, file_name, domain_id):
+    def get_download_url(self, file_id: str, file_name: str, domain_id: str):
         download_url = self.file_conn.get_download_url(file_id, file_name)
         return download_url
 
-    def check_file(self, file_id, file_name):
+    def check_file(self, file_id: str, file_name: str):
         return self.file_conn.check_file(file_id, file_name)
 
-    def delete_file(self, file_id, file_name):
+    def delete_file(self, file_id: str, file_name: str) -> None:
         self.file_conn.delete_file(file_id, file_name)
