@@ -13,12 +13,7 @@ class IdentityManager(BaseManager):
             SpaceConnector, service="identity"
         )
 
-    def list_projects(self, query, domain_id):
+    def get_workspace(self, workspace_id, domain_id):
         return self.identity_connector.dispatch(
-            "Project.list", {"query": query, "domain_id": domain_id}
-        )
-
-    def get_project(self, project_id, domain_id):
-        return self.identity_connector.dispatch(
-            "Project.get", {"project_id": project_id, "domain_id": domain_id}
+            "Workspace.get", {"workspace_id": workspace_id, "domain_id": domain_id}
         )
