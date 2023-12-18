@@ -13,7 +13,7 @@ class IdentityManager(BaseManager):
             SpaceConnector, service="identity"
         )
 
-    def get_workspace(self, workspace_id, domain_id):
+    def check_workspace(self, workspace_id, domain_id):
         return self.identity_connector.dispatch(
-            "Workspace.get", {"workspace_id": workspace_id, "domain_id": domain_id}
+            "Workspace.check", {"workspace_id": workspace_id, "domain_id": domain_id}
         )

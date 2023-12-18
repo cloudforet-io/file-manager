@@ -16,17 +16,18 @@ _LOGGER = logging.getLogger(__name__)
 @mutation_handler
 @event_handler
 class FileService(BaseService):
-    service = "file_manager"
     resource = "File"
-    permission_group = "COMPOUND"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.file_mgr: FileManager = self.locator.get_manager(FileManager)
         self.identity_mgr: IdentityManager = self.locator.get_manager(IdentityManager)
 
-    @transaction(scope="workspace_member:write")
-    @check_required(["name", "permission_group", "domain_id"])
+    @transaction(
+        permission="file-manager:File.write",
+        role_types=["SYSTEM_ADMIN", "DOMAIN_ADMIN", "WORKSPACE_OWNER"],
+    )
+    @check_required(["name", "resource_group"])
     def add(self, params: dict) -> Tuple[File, str, dict]:
         """Add file
 
@@ -35,21 +36,26 @@ class FileService(BaseService):
                 'name': 'str',              # required
                 'tags': 'dict',
                 'reference': 'dict',
-                'permission_group',         # required
+                'resource_group',           # required
                 'workspace_id': 'str',
-                'domain_id': 'str'(meta)    # required
+                'domain_id': 'str'
             }
 
         Returns:
             file_vo
         """
-
+        resource_group = params["resource_group"]
+        workspace_id = params.get("workspace_id")
+        domain_id = params.get("domain_id")
         params["file_type"] = self._get_file_type(params["name"])
 
-        if params["permission_group"] == "WORKSPACE":
-            self.identity_mgr.get_workspace(params["workspace_id"], params["domain_id"])
-        else:
+        if resource_group == "SYSTEM":
+            params["domain_id"] = "*"
             params["workspace_id"] = "*"
+        elif resource_group == "DOMAIN":
+            params["workspace_id"] = "*"
+        else:
+            self.identity_mgr.check_workspace(workspace_id, domain_id)
 
         file_vo: File = self.file_mgr.create_file(params)
 
@@ -62,18 +68,21 @@ class FileService(BaseService):
 
         return file_vo, upload_url, upload_options
 
-    @transaction(scope="workspace_member:write")
-    @check_required(["file_id", "domain_id"])
+    @transaction(
+        permission="file-manager:File.write",
+        role_types=["SYSTEM_ADMIN", "DOMAIN_ADMIN", "WORKSPACE_OWNER"],
+    )
+    @check_required(["file_id"])
     def update(self, params: dict) -> File:
         """Update file
 
         Args:
             params (dict): {
-                'file_id': 'str',            # required
+                'file_id': 'str',        # required
                 'tags': 'dict',
                 'reference': 'dict',
-                'workspace_id': 'str',
-                'domain_id': 'str'(meta)     # required
+                'workspace_id': 'str',   # injected from auth
+                'domain_id': 'str'       # injected from auth
             }
 
         Returns:
@@ -81,7 +90,7 @@ class FileService(BaseService):
         """
 
         workspace_id = params.get("workspace_id")
-        domain_id = params["domain_id"]
+        domain_id = params.get("domain_id")
 
         file_id = params["file_id"]
         file_vo: File = self.file_mgr.get_file(file_id, workspace_id, domain_id)
@@ -89,16 +98,19 @@ class FileService(BaseService):
 
         return file_vo
 
-    @transaction(scope="workspace_member:write")
-    @check_required(["file_id", "domain_id"])
+    @transaction(
+        permission="file-manager:File.write",
+        role_types=["SYSTEM_ADMIN", "DOMAIN_ADMIN", "WORKSPACE_OWNER"],
+    )
+    @check_required(["file_id"])
     def delete(self, params: dict) -> None:
         """Delete file
 
         Args:
             params (dict): {
-                'file_id': 'str',           # required
-                'workspace_id': 'str',
-                'domain_id': 'str'(meta),   # required
+                'file_id': 'str',        # required
+                'workspace_id': 'str',   # injected from auth
+                'domain_id': 'str'       # injected from auth
             }
 
         Returns:
@@ -107,7 +119,7 @@ class FileService(BaseService):
 
         file_id = params["file_id"]
         workspace_id = params.get("workspace_id")
-        domain_id = params["domain_id"]
+        domain_id = params.get("domain_id")
 
         file_vo: File = self.file_mgr.get_file(file_id, workspace_id, domain_id)
 
@@ -118,16 +130,28 @@ class FileService(BaseService):
 
         self.file_mgr.delete_file_by_vo(file_vo)
 
-    @transaction(scope="workspace_member:read")
-    @check_required(["file_id", "domain_id"])
+    @transaction(
+        permission="file-manager:File.read",
+        role_types=[
+            "SYSTEM_ADMIN",
+            "DOMAIN_ADMIN",
+            "WORKSPACE_OWNER",
+            "WORKSPACE_MEMBER",
+        ],
+    )
+    @change_value_by_rule("APPEND", "domain_id", "*")
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
+    @check_required(["file_id"])
     def get_download_url(self, params: dict) -> Tuple[File, Union[str, None]]:
         """Get download url of file
 
         Args:
             params (dict): {
                 'file_id': 'str',         # required
-                'workspace_id': 'str',
-                'domain_id': 'str',       # required
+                'workspace_id': 'str',    # injected from auth
+                'domain_id': 'str'        # injected from auth
+                'user_projects': 'list'   # injected from auth
             }
 
         Returns:
@@ -136,7 +160,7 @@ class FileService(BaseService):
 
         file_id = params["file_id"]
         workspace_id = params.get("workspace_id")
-        domain_id = params["domain_id"]
+        domain_id = params.get("domain_id")
 
         file_vo: File = self.file_mgr.get_file(file_id, workspace_id, domain_id)
 
@@ -148,7 +172,13 @@ class FileService(BaseService):
             if not file_conn_mgr.check_file(file_id, file_vo.name):
                 raise ERROR_FILE_UPLOAD_STATE()
 
-            file_vo = self.file_mgr.update_file_by_vo({"state": "DONE"}, file_vo)
+            conditions = {"state": "DONE"}
+            if workspace_id:
+                conditions["workspace_id"] = workspace_id
+            if domain_id:
+                conditions["domain_id"] = domain_id
+
+            file_vo = self.file_mgr.update_file_by_vo(conditions, file_vo)
 
         download_url = file_conn_mgr.get_download_url(
             file_id, file_vo.name, file_vo.domain_id
@@ -156,7 +186,18 @@ class FileService(BaseService):
 
         return file_vo, download_url
 
-    @transaction(scope="workspace_member:read")
+    @transaction(
+        permission="file-manager:File.read",
+        role_types=[
+            "SYSTEM_ADMIN",
+            "DOMAIN_ADMIN",
+            "WORKSPACE_OWNER",
+            "WORKSPACE_MEMBER",
+        ],
+    )
+    @change_value_by_rule("APPEND", "domain_id", "*")
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @check_required(["file_id"])
     def get(self, params: dict) -> File:
         """Get file
@@ -164,8 +205,9 @@ class FileService(BaseService):
         Args:
             params (dict): {
                 'file_id': 'str',          # required
-                'workspace_id': 'str',
-                'domain_id': 'str'(meta)   # required
+                'workspace_id': 'str',     # injected from auth
+                'domain_id': 'str'         # injected from auth
+                'user_projects': 'list'    # injected from auth
             }
 
         Returns:
@@ -174,11 +216,23 @@ class FileService(BaseService):
 
         file_id = params["file_id"]
         workspace_id = params.get("workspace_id")
-        domain_id = params["domain_id"]
+        domain_id = params.get("domain_id")
+        user_projects = params.get("user_projects")
 
-        return self.file_mgr.get_file(file_id, workspace_id, domain_id)
+        return self.file_mgr.get_file(file_id, workspace_id, domain_id, user_projects)
 
-    @transaction(scope="workspace_member:read")
+    @transaction(
+        permission="file-manager:File.read",
+        role_types=[
+            "SYSTEM_ADMIN",
+            "DOMAIN_ADMIN",
+            "WORKSPACE_OWNER",
+            "WORKSPACE_MEMBER",
+        ],
+    )
+    @change_value_by_rule("APPEND", "domain_id", "*")
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @append_query_filter(
         [
             "file_id",
@@ -187,9 +241,10 @@ class FileService(BaseService):
             "file_type",
             "resource_type",
             "resource_id",
-            "permission_group",
+            "resource_group",
             "workspace_id",
             "domain_id",
+            "user_projects",
         ]
     )
     @append_keyword_filter(["file_id", "name"])
@@ -205,9 +260,10 @@ class FileService(BaseService):
                 'file_type': 'str',
                 'resource_type': 'str',
                 'resource_id': 'str',
-                'permission_group': 'str',
+                'resource_group': 'str',
                 'workspace_id': 'str',
-                'domain_id': 'str',                             # required
+                'domain_id': 'str'
+                'user_projects': 'list'                             # injected from auth
             }
 
         Returns:
@@ -218,9 +274,20 @@ class FileService(BaseService):
         query = params.get("query", {})
         return self.file_mgr.list_files(query)
 
-    @transaction(scope="workspace_member:read")
+    @transaction(
+        permission="file-manager:File.read",
+        role_types=[
+            "SYSTEM_ADMIN",
+            "DOMAIN_ADMIN",
+            "WORKSPACE_OWNER",
+            "WORKSPACE_MEMBER",
+        ],
+    )
+    @change_value_by_rule("APPEND", "domain_id", "*")
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @check_required(["query"])
-    @append_query_filter(["domain_id"])
+    @append_query_filter(["user_projects", "workspace_id", "domain_id"])
     @append_keyword_filter(["file_id", "name"])
     def stat(self, params: dict) -> dict:
         """

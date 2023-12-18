@@ -23,7 +23,10 @@ class FileConnectorManager(BaseManager):
         upload_url, upload_options = self.file_conn.get_upload_url(file_id, file_name)
         return upload_url, upload_options
 
-    @cache.cacheable(key="file-manager:download-url:{domain_id}:{file_id}", expire=1800)
+    @cache.cacheable(
+        key="file-manager:download-url:{domain_id}:{workspace_id}:{file_id}",
+        expire=1800,
+    )
     def get_download_url(self, file_id: str, file_name: str, domain_id: str):
         download_url = self.file_conn.get_download_url(file_id, file_name)
         return download_url

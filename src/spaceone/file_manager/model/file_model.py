@@ -21,9 +21,11 @@ class File(MongoModel):
     file_type = StringField(max_length=255, null=True, default=None)
     tags = DictField()
     reference = EmbeddedDocumentField(FileReference, null=True, default=None)
-    permission_group = StringField(max_length=40, choices=("DOMAIN", "WORKSPACE"))
+    resource_group = StringField(
+        max_length=40, choices=("SYSTEM", "DOMAIN", "WORKSPACE")
+    )
     workspace_id = StringField(max_length=40, null=True, default=None)
-    domain_id = StringField(max_length=40, required=True)
+    domain_id = StringField(max_length=40, null=True, default=None)
     created_at = DateTimeField(auto_now_add=True)
 
     meta = {
@@ -33,6 +35,7 @@ class File(MongoModel):
             "name",
             "state",
             "reference",
+            "resource_group",
             "workspace_id",
             "domain_id",
         ],
@@ -46,6 +49,7 @@ class File(MongoModel):
             "file_type",
             "reference.resource_type",
             "reference.resource_id",
+            "resource_group",
             "workspace_id",
             "domain_id",
         ],

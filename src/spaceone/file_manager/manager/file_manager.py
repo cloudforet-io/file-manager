@@ -37,10 +37,25 @@ class FileManager(BaseManager):
     def delete_file_by_vo(file_vo: File) -> None:
         file_vo.delete()
 
-    def get_file(self, file_id: str, workspace_id: str, domain_id: str) -> File:
-        return self.file_model.get(
-            file_id=file_id, workspace_id=workspace_id, domain_id=domain_id
-        )
+    def get_file(
+        self,
+        file_id: str,
+        workspace_id: str = None,
+        domain_id: str = None,
+        project_id: str = None,
+    ) -> File:
+        conditions = {"file_id": file_id}
+
+        if workspace_id:
+            conditions.update({"workspace_id": workspace_id})
+
+        if domain_id:
+            conditions.update({"domain_id": domain_id})
+
+        if project_id:
+            conditions.update({"project_id": project_id})
+
+        return self.file_model.get(**conditions)
 
     def list_files(self, query: dict) -> dict:
         return self.file_model.query(**query)

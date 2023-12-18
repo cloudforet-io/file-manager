@@ -35,7 +35,7 @@ def FileInfo(
         "file_id": file_vo.file_id,
         "name": file_vo.name,
         "state": file_vo.state,
-        "permission_group": file_vo.permission_group,
+        "resource_group": file_vo.resource_group,
         "workspace_id": file_vo.workspace_id,
         "domain_id": file_vo.domain_id,
     }
