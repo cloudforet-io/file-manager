@@ -26,13 +26,6 @@ setup(
     author_email="admin@spaceone.dev",
     license="Apache License 2.0",
     packages=find_packages(),
-    install_requires=[
-        "spaceone-core",
-        "spaceone-api",
-        "mongoengine",
-        "mongomock",
-        "redis",
-        "boto3",
-    ],
+    install_requires=["spaceone-core", "spaceone-api"],
     zip_safe=False,
 )
