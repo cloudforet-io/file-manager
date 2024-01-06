@@ -36,3 +36,6 @@ CONNECTORS = {
         },
     },
 }
+
+# System Token Settings
+TOKEN = ""
