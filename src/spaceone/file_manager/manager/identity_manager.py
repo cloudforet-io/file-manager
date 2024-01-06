@@ -14,6 +14,9 @@ class IdentityManager(BaseManager):
         )
 
     def check_workspace(self, workspace_id, domain_id):
+        system_token = self.transaction.get_meta("token")
         return self.identity_connector.dispatch(
-            "Workspace.check", {"workspace_id": workspace_id, "domain_id": domain_id}
+            "Workspace.check",
+            {"workspace_id": workspace_id, "domain_id": domain_id},
+            token=system_token,
         )
