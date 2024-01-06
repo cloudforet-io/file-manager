@@ -1,5 +1,6 @@
 import logging
 
+from spaceone.core import config
 from spaceone.core.manager import BaseManager
 from spaceone.core.connector.space_connector import SpaceConnector
 
@@ -14,7 +15,7 @@ class IdentityManager(BaseManager):
         )
 
     def check_workspace(self, workspace_id, domain_id):
-        system_token = self.transaction.get_meta("token")
+        system_token = config.get_global("TOKEN")
         return self.identity_connector.dispatch(
             "Workspace.check",
             {"workspace_id": workspace_id, "domain_id": domain_id},
