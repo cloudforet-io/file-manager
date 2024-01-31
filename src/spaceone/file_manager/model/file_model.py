@@ -22,7 +22,7 @@ class File(MongoModel):
     tags = DictField()
     reference = EmbeddedDocumentField(FileReference, null=True, default=None)
     resource_group = StringField(
-        max_length=40, choices=("SYSTEM", "DOMAIN", "WORKSPACE")
+        max_length=40, choices=("SYSTEM", "DOMAIN", "WORKSPACE", "PROJECT")
     )
     workspace_id = StringField(max_length=40, null=True, default=None)
     domain_id = StringField(max_length=40, null=True, default=None)
