@@ -25,7 +25,7 @@ class FileService(BaseService):
 
     @transaction(
         permission="file-manager:File.write",
-        role_types=["SYSTEM_ADMIN", "DOMAIN_ADMIN", "WORKSPACE_OWNER"],
+        role_types=["SYSTEM_ADMIN", "DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @check_required(["name", "resource_group"])
     def add(self, params: dict) -> Tuple[File, str, dict]:
@@ -70,7 +70,7 @@ class FileService(BaseService):
 
     @transaction(
         permission="file-manager:File.write",
-        role_types=["SYSTEM_ADMIN", "DOMAIN_ADMIN", "WORKSPACE_OWNER"],
+        role_types=["SYSTEM_ADMIN", "DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @check_required(["file_id"])
     def update(self, params: dict) -> File:
@@ -100,7 +100,7 @@ class FileService(BaseService):
 
     @transaction(
         permission="file-manager:File.write",
-        role_types=["SYSTEM_ADMIN", "DOMAIN_ADMIN", "WORKSPACE_OWNER"],
+        role_types=["SYSTEM_ADMIN", "DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @check_required(["file_id"])
     def delete(self, params: dict) -> None:
