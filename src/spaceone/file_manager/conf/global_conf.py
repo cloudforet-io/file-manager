@@ -1,3 +1,5 @@
+REST_TITLE = "REST API for File Manager"
+
 DATABASE_AUTO_CREATE_INDEX = True
 DATABASES = {
     "default": {
