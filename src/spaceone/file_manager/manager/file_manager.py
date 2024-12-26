@@ -1,7 +1,8 @@
 import logging
+from mongoengine import QuerySet
 
 from spaceone.core.manager import BaseManager
-from spaceone.file_manager.model.file_model import File
+from spaceone.file_manager.model.file.database import File
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -9,7 +10,7 @@ _LOGGER = logging.getLogger(__name__)
 class FileManager(BaseManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.file_model: File = self.locator.get_model(File)
+        self.file_model = File
 
     def create_file(self, params: dict) -> File:
         def _rollback(vo: File) -> None:
@@ -17,7 +18,6 @@ class FileManager(BaseManager):
             vo.delete()
 
         file_vo: File = self.file_model.create(params)
-
         self.transaction.add_rollback(_rollback, file_vo)
 
         return file_vo
@@ -40,22 +40,21 @@ class FileManager(BaseManager):
     def get_file(
         self,
         file_id: str,
-        workspace_id: str = None,
         domain_id: str = None,
-        project_id: str = None,
+        workspace_id: str = None,
     ) -> File:
         conditions = {"file_id": file_id}
 
-        if workspace_id:
-            conditions.update({"workspace_id": workspace_id})
-
         if domain_id:
-            conditions.update({"domain_id": domain_id})
+            conditions["domain_id"] = domain_id
 
-        if project_id:
-            conditions.update({"project_id": project_id})
+        if workspace_id:
+            conditions["workspace_id"] = workspace_id
 
         return self.file_model.get(**conditions)
+
+    def filter_files(self, **conditions) -> QuerySet:
+        return self.file_model.filter(**conditions)
 
     def list_files(self, query: dict) -> dict:
         return self.file_model.query(**query)
