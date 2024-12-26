@@ -64,10 +64,6 @@ class FileService(BaseService):
 
         file_vo = self.file_mgr.create_file(params.dict())
 
-        file_conn_mgr = FileConnectorManager()
-        # Update File
-        # file_id = file_vo.file_id
-
         # Update Download URL
         # /files/public/{file_id}
         # /files/domain/{domain_id}/{file_id}

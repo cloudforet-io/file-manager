@@ -16,10 +16,6 @@ ResourceGroup = Literal["SYSTEM", "DOMAIN", "WORKSPACE"]
 
 class FileAddRequest(BaseModel):
     name: str
-    file_type: Union[str, None] = None
-    reference: Union[dict, None] = None
-    file_binary: Union[bytes, None] = None
-    tags: Union[dict, None] = None
     resource_group: ResourceGroup
     domain_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
