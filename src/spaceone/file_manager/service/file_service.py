@@ -1,7 +1,9 @@
 import logging
 from typing import Union
 
+from spaceone.core import utils
 from spaceone.core.service import *
+from spaceone.file_manager.error.custom import *
 from spaceone.file_manager.model.file.request import *
 from spaceone.file_manager.model.file.response import *
 from spaceone.file_manager.manager.file_manager import FileManager
@@ -40,7 +42,6 @@ class FileService(BaseService):
             params (FileAddRequest): {
                 'name': 'str',              # required
                 'file_type': 'str',
-                'file_binary': 'bytes',
                 'reference': 'dict',
                 'tags': 'dict',
                 'resource_group',           # required
@@ -52,27 +53,21 @@ class FileService(BaseService):
             FileResponse:
         """
 
-        params.file_type = self._get_file_type(params.name)
-
+        params.file_id = utils.generate_id("file")
+        # params.file_type = self._get_file_type(params.name)
         if params.resource_group == "SYSTEM":
             params.domain_id = "*"
             params.workspace_id = "*"
         elif params.resource_group == "DOMAIN":
             params.workspace_id = "*"
-        else:
+        elif params.resource_group == "WORKSPACE":
             self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
-
+        elif params.resource_group == "PROJECT":
+            self.identity_mgr.check_project(params.project_id, params.domain_id)
+        else:
+            raise ERROR_NOT_SUPPORTED_RESOURCE_GROUP(resource_group=params.resource_group)
+        
         file_vo = self.file_mgr.create_file(params.dict())
-
-        # Update Download URL
-        # /files/public/{file_id}
-        # /files/domain/{domain_id}/{file_id}
-        # /files/domain/{domain_id}/workspace/{workspace_id}/{file_id}
-        download_url = ""
-
-        file_vo = self.file_mgr.update_file_by_vo(
-            {"download_url": download_url}, file_vo
-        )
 
         return FileResponse(**file_vo.to_dict())
 
@@ -94,6 +89,7 @@ class FileService(BaseService):
                 'file_id': 'str',           # required
                 'reference': 'dict',
                 'tags': 'dict',
+                'download_url': 'str',
                 'workspace_id': 'str',      # injected from auth
                 'domain_id': 'str'          # injected from auth
             }
