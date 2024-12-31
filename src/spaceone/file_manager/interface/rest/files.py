@@ -75,7 +75,7 @@ class Files(BaseAPI):
         return StreamingResponse(
             content=file_stream,
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f"attachment; filename={file_vo["name"]}"}
+            headers={"Content-Disposition": f"attachment; filename={file_vo['name']}"}
         )
 
     @router.post("/domain/{domain_id}/upload")
@@ -129,7 +129,7 @@ class Files(BaseAPI):
             return StreamingResponse(
                 content=file_stream,
                 media_type="binary/octet-stream",
-                headers={"Content-Disposition": f"attachment; filename={file_vo["name"]}"}
+                headers={"Content-Disposition": f"attachment; filename={file_vo['name']}"}
             )
         except Exception as e:
             raise ERROR_FILE_DOWNLOAD_FAILED(file_id=file_id)
@@ -186,7 +186,7 @@ class Files(BaseAPI):
         return StreamingResponse(
             content=file_stream,
             media_type="binary/octet-stream",
-            headers={"Content-Disposition": f"attachment; filename={file_vo["name"]}"}
+            headers={"Content-Disposition": f"attachment; filename={file_vo['name']}"}
         )
 
     def get_download_url(self, response: dict ) -> str:
