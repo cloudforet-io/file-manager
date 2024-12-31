@@ -55,9 +55,17 @@ application:
         AWSS3Connector:
             aws_access_key_id: my_key
             aws_secret_access_key: my_secret_key
-            reigon_name: default_region
+            region_name: default_region
             bucket_name: default_bucket
 
+application_rest:
+  BACKEND: AWSS3Connector
+  CONNECTORS:
+    AWSS3Connector:
+      aws_access_key_id: my_key
+      aws_secret_access_key: my_secret_key
+      region_name: default_region
+      bucket_name: default_bucket
 #    BACKEND: ConsulConnector
 #    CONNECTORS:
 #      ConsulConnector:
@@ -69,7 +77,7 @@ application_scheduler: {}
 # Overwrite worker config
 application_worker: {}
 
-application_rest: {}
+
 
 
 ##########################
