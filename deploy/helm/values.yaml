@@ -157,6 +157,15 @@ service:
               port: 50051
               targetPort: 50051
               protocol: TCP
+    rest:
+        type: ClusterIP
+        annotations:
+            nil: nil
+        ports:
+            - name: rest
+              port: 80
+              targetPort: 80
+              protocol: TCP
 
 ################################
 # volumeMount per deployment
