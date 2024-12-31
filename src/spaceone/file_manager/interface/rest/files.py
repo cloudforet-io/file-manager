@@ -1,6 +1,5 @@
 from curses import meta
 import logging
-from turtle import down
 
 from fastapi import Request, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
