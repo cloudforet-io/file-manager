@@ -1,5 +1,7 @@
 import logging
 import boto3
+from io import BytesIO
+import botocore
 
 from spaceone.core.error import *
 from spaceone.file_manager.connector.file_base_connector import FileBaseConnector
@@ -72,3 +74,23 @@ class AWSS3Connector(FileBaseConnector):
     @staticmethod
     def _generate_object_name(file_id, file_name):
         return f"{file_id}/{file_name}"
+
+
+    def upload_file(self, remote_file_path:str, data: bytes) -> None:
+        file_obj =  BytesIO(data)
+        if self.client is None:
+            raise ERROR_CONNECTOR_CONFIGURATION(backend="AWSS3Connector")
+        self.client.upload_fileobj(file_obj, self.bucket_name, remote_file_path)
+    
+    def download_file(self, remote_file_path:str) :
+        
+        if self.client is None:
+            raise ERROR_CONNECTOR_CONFIGURATION(backend="AWSS3Connector")
+        
+        # S3 객체 가져오기
+        obj = self.client.get_object(Bucket=self.bucket_name, Key=remote_file_path)
+        
+        # 파일 크기 출력
+        # print(f"File size: {obj['ContentLength']} bytes")
+        # S3 스트리밍 바디 얻기
+        return obj["Body"]

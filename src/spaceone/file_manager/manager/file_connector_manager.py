@@ -36,3 +36,9 @@ class FileConnectorManager(BaseManager):
 
     def delete_file(self, file_id: str, file_name: str) -> None:
         self.file_conn.delete_file(file_id, file_name)
+
+    def upload_file(self, remote_file_path:str, file_binary: bytes) -> None:
+        self.file_conn.upload_file(remote_file_path, file_binary)  
+
+    def download_file(self, remote_file_path:str) :
+        return self.file_conn.download_file(remote_file_path)
