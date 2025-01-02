@@ -21,3 +21,19 @@ class IdentityManager(BaseManager):
             {"workspace_id": workspace_id, "domain_id": domain_id},
             token=system_token,
         )
+
+    def check_project(self, project_id, domain_id):
+        system_token = config.get_global("TOKEN")
+        return self.identity_connector.dispatch(
+            "Project.check",
+            {"project_id": project_id, "domain_id": domain_id},
+            token=system_token,
+        )
+    
+    # def check_user(self, user_id, domain_id):
+    #     system_token = config.get_global("TOKEN")
+    #     return self.identity_connector.dispatch(
+    #         "User.check",
+    #         {"user_id": user_id, "domain_id": domain_id},
+    #         token=system_token,
+    #     )

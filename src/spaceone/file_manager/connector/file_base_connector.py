@@ -13,11 +13,11 @@ class FileBaseConnector(BaseConnector):
         pass
 
     @abc.abstractmethod
-    def check_file(self, file_id: str, file_name: str) -> bool:
+    def check_file(self, remote_file_path:str) -> bool:
         pass
 
     @abc.abstractmethod
-    def delete_file(self, file_id: str, file_name: str) -> None:
+    def delete_file(self, remote_file_path:str ) -> None:
         pass
 
     @abc.abstractmethod

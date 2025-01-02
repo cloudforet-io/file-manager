@@ -6,7 +6,7 @@ from spaceone.core.model.mongo_model import MongoModel
 _LOGGER = logging.getLogger(__name__)
 
 
-class FileReference(EmbeddedDocument):
+class UserFileReference(EmbeddedDocument):
     resource_type = StringField(required=True)
     resource_id = StringField(required=True)
 
@@ -14,18 +14,14 @@ class FileReference(EmbeddedDocument):
         return dict(self.to_mongo())
 
 
-class File(MongoModel):
+class UserFile(MongoModel):
     file_id = StringField(max_length=40, generate_id="file", unique=True)
     name = StringField(max_length=255, required=True)
     download_url = StringField(null=True, default=None)
     tags = DictField()
-    reference = EmbeddedDocumentField(FileReference, null=True, default=None)
-    resource_group = StringField(
-        max_length=40, choices=("SYSTEM", "DOMAIN", "WORKSPACE", "PROJECT")
-    )
-    workspace_id = StringField(max_length=40, null=True, default=None)
+    reference = EmbeddedDocumentField(UserFileReference, null=True, default=None)
     domain_id = StringField(max_length=40, null=True, default=None)
-    project_id =   StringField(max_length=40, null=True, default=None)
+    user_id = StringField(max_length=40, null=True, default=None)
     created_at = DateTimeField(auto_now_add=True)
 
     meta = {
@@ -34,10 +30,8 @@ class File(MongoModel):
             "file_id",
             "name",
             "reference",
-            "resource_group",
-            "workspace_id",
             "domain_id",
-            "project_id",
+            "user_id",
         ],
         "change_query_keys": {
             "resource_type": "reference.resource_type",
@@ -48,9 +42,7 @@ class File(MongoModel):
             "file_id",
             "reference.resource_type",
             "reference.resource_id",
-            "resource_group",
-            "workspace_id",
-            "project_id",
             "domain_id",
+            "user_id",
         ],
     }

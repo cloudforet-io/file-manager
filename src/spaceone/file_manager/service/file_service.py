@@ -1,5 +1,7 @@
 import logging
+from math import log
 from typing import Union
+from xml import dom
 
 from spaceone.core import utils
 from spaceone.core.service import *
@@ -41,10 +43,9 @@ class FileService(BaseService):
         Args:
             params (FileAddRequest): {
                 'name': 'str',              # required
-                'file_type': 'str',
                 'reference': 'dict',
                 'tags': 'dict',
-                'resource_group',           # required
+                'project_id': 'str',
                 'workspace_id': 'str',      # injected from auth
                 'domain_id': 'str'          # injected from auth
             }
@@ -53,22 +54,27 @@ class FileService(BaseService):
             FileResponse:
         """
 
-        params.file_id = utils.generate_id("file")
-        # params.file_type = self._get_file_type(params.name)
-        if params.resource_group == "SYSTEM":
+        # role_type = self.transaction.get_meta("authorization.role_type")
+        resource_group = params.resource_group
+        
+        if resource_group == "SYSTEM":
             params.domain_id = "*"
             params.workspace_id = "*"
-        elif params.resource_group == "DOMAIN":
+            params.resource_group = "SYSTEM"
+        elif resource_group == "DOMAIN":
             params.workspace_id = "*"
-        elif params.resource_group == "WORKSPACE":
+            params.resource_group = "DOMAIN"
+        elif resource_group == "WORKSPACE" :
             self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
-        elif params.resource_group == "PROJECT":
-            self.identity_mgr.check_project(params.project_id, params.domain_id)
+            params.resource_group = "WORKSPACE"
+        # elif resource_group == "PROJECT":
+        #     self.identity_mgr.check_project(params.project_id, params.domain_id)
+        #     params.resource_group = "PROJECT"
         else:
-            raise ERROR_NOT_SUPPORTED_RESOURCE_GROUP(resource_group=params.resource_group)
+            raise ERROR_NOT_SUPPORTED_RESOURCE_GROUP(resource_group=resource_group)
+
         
         file_vo = self.file_mgr.create_file(params.dict())
-
         return FileResponse(**file_vo.to_dict())
 
     @transaction(
@@ -99,7 +105,10 @@ class FileService(BaseService):
         """
 
         file_vo = self.file_mgr.get_file(
-            params.file_id, params.domain_id, params.workspace_id
+            params.file_id,
+            params.domain_id,
+            params.workspace_id,
+            params.project_id,
         )
 
         file_vo = self.file_mgr.update_file_by_vo(
@@ -124,6 +133,7 @@ class FileService(BaseService):
         Args:
             params (FileDeleteRequest): {
                 'file_id': 'str',           # required
+                'project_id': 'str',
                 'workspace_id': 'str',      # injected from auth
                 'domain_id': 'str'          # injected from auth
             }
@@ -133,11 +143,17 @@ class FileService(BaseService):
         """
 
         file_vo = self.file_mgr.get_file(
-            params.file_id, params.domain_id, params.workspace_id
+            params.file_id,
+            params.domain_id,
+            params.workspace_id,
+            params.project_id,
         )
-
-        file_conn_mgr = FileConnectorManager()
-        file_conn_mgr.delete_file(file_vo.file_id, file_vo.name)
+        try:
+            
+            file_conn_mgr = FileConnectorManager()
+            file_conn_mgr.delete_file(file_vo.download_url)
+        except Exception as e:
+            logging.error(f'[ERROR] Failed to delete file : {file_vo.name} ({file_vo.file_id})')
 
         self.file_mgr.delete_file_by_vo(file_vo)
 
@@ -168,7 +184,10 @@ class FileService(BaseService):
         """
 
         file_vo = self.file_mgr.get_file(
-            params.file_id, params.domain_id, params.workspace_id
+            params.file_id,
+            params.domain_id,
+            params.workspace_id,
+            params.project_id,
         )
 
         return FileResponse(**file_vo.to_dict())
@@ -188,11 +207,11 @@ class FileService(BaseService):
         [
             "file_id",
             "name",
-            "file_type",
             "resource_type",
             "resource_id",
             "domain_id",
             "workspace_id",
+            "project_id",
         ]
     )
     @append_keyword_filter(["file_id", "name"])
@@ -205,7 +224,6 @@ class FileService(BaseService):
                 'query': 'dict (spaceone.api.core.v1.Query)',
                 'file_id': 'str',
                 'name': 'str',
-                'file_type': 'str',
                 'resource_type': 'str',
                 'resource_id': 'str',
                 'domain_id': 'str',                             # injected from auth
@@ -252,10 +270,10 @@ class FileService(BaseService):
         query = params.query or {}
         return self.file_mgr.stat_files(query)
 
-    @staticmethod
-    def _get_file_type(file_name: str) -> Union[str, None]:
-        file_name_split = file_name.split(".")
-        if len(file_name_split) == 1:
-            return None
-        else:
-            return file_name_split[-1]
+    # @staticmethod
+    # def _get_file_type(file_name: str) -> Union[str, None]:
+    #     file_name_split = file_name.split(".")
+    #     if len(file_name_split) == 1:
+    #         return None
+    #     else:
+    #         return file_name_split[-1]

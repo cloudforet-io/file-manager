@@ -31,11 +31,11 @@ class FileConnectorManager(BaseManager):
         download_url = self.file_conn.get_download_url(file_id, file_name)
         return download_url
 
-    def check_file(self, file_id: str, file_name: str):
-        return self.file_conn.check_file(file_id, file_name)
+    def check_file(self, remote_file_path:str):
+        return self.file_conn.check_file(remote_file_path)
 
-    def delete_file(self, file_id: str, file_name: str) -> None:
-        self.file_conn.delete_file(file_id, file_name)
+    def delete_file(self, remote_file_path:str) -> None:
+        self.file_conn.delete_file(remote_file_path)
 
     def upload_file(self, remote_file_path:str, file_binary: bytes) -> None:
         self.file_conn.upload_file(remote_file_path, file_binary)  
