@@ -3,21 +3,18 @@ from typing import Union, List
 from pydantic import BaseModel
 
 from spaceone.core import utils
-from spaceone.file_manager.model.file.request import ResourceGroup
 
-__all__ = ["FileResponse", "FilesResponse"]
+__all__ = ["UserFileResponse", "UserFilesResponse"]
 
 
-class FileResponse(BaseModel):
+class UserFileResponse(BaseModel):
     file_id: Union[str, None] = None
     name: Union[str, None] = None
     download_url: Union[str, None] = None
     reference: Union[dict, None] = None
     tags: Union[dict, None] = None
-    resource_group: Union[ResourceGroup, None] = None
     domain_id: Union[str, None] = None
-    workspace_id: Union[str, None] = None
-    project_id: Union[str, None] = None
+    user_id: Union[str, None] = None
     created_at: Union[datetime, None] = None
 
     def dict(self, *args, **kwargs):
@@ -26,6 +23,6 @@ class FileResponse(BaseModel):
         return data
 
 
-class FilesResponse(BaseModel):
-    results: List[FileResponse]
+class UserFilesResponse(BaseModel):
+    results: List[UserFileResponse]
     total_count: int
