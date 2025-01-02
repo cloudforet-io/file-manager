@@ -10,14 +10,14 @@ _LOGGER = logging.getLogger(__name__)
 class UserFileManager(BaseManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.file_model = UserFile
+        self.user_file_model = UserFile
 
     def create_file(self, params: dict) -> UserFile:
         def _rollback(vo: UserFile) -> None:
             _LOGGER.info(f"[ROLLBACK] Delete file : {vo.name} ({vo.file_id})")
             vo.delete()
 
-        file_vo: UserFile = self.file_model.create(params)
+        file_vo: UserFile = self.user_file_model.create(params)
         self.transaction.add_rollback(_rollback, file_vo)
 
         return file_vo
@@ -51,13 +51,13 @@ class UserFileManager(BaseManager):
         if user_id:
             conditions["user_id"] = user_id
 
-        return self.file_model.get(**conditions)
+        return self.user_file_model.get(**conditions)
 
     def filter_files(self, **conditions) -> QuerySet:
-        return self.file_model.filter(**conditions)
+        return self.user_file_model.filter(**conditions)
 
     def list_files(self, query: dict) -> dict:
-        return self.file_model.query(**query)
+        return self.user_file_model.query(**query)
 
     def stat_files(self, query: dict) -> dict:
-        return self.file_model.stat(**query)
+        return self.user_file_model.stat(**query)
