@@ -1,1 +1,2 @@
 from spaceone.file_manager.connector.aws_s3_connector import AWSS3Connector
+from spaceone.file_manager.connector.minio_connector import MinIOS3Connector
