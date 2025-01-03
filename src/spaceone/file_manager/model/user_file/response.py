@@ -10,7 +10,6 @@ __all__ = ["UserFileResponse", "UserFilesResponse"]
 class UserFileResponse(BaseModel):
     file_id: Union[str, None] = None
     name: Union[str, None] = None
-    download_url: Union[str, None] = None
     reference: Union[dict, None] = None
     tags: Union[dict, None] = None
     domain_id: Union[str, None] = None
@@ -20,6 +19,7 @@ class UserFileResponse(BaseModel):
     def dict(self, *args, **kwargs):
         data = super().dict(*args, **kwargs)
         data["created_at"] = utils.datetime_to_iso8601(data["created_at"])
+        data["download_url"] = "/file/user/{file_id}"
         return data
 
 

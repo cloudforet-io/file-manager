@@ -17,6 +17,7 @@ class FileManager(BaseManager):
             _LOGGER.info(f"[ROLLBACK] Delete file : {vo.name} ({vo.file_id})")
             vo.delete()
 
+        print(params)
         file_vo: File = self.file_model.create(params)
         self.transaction.add_rollback(_rollback, file_vo)
 
@@ -40,18 +41,24 @@ class FileManager(BaseManager):
     def get_file(
         self,
         file_id: str,
-        domain_id: str = None,
+        domain_id: str,
         workspace_id: str = None,
+        project_id: str = None,
     ) -> File:
-        conditions = {"file_id": file_id}
-
-        if domain_id:
-            conditions["domain_id"] = domain_id
-
+        
+        condition = {
+            "file_id": file_id,
+            "domain_id": domain_id,
+        }
+        
         if workspace_id:
-            conditions["workspace_id"] = workspace_id
+            condition["workspace_id"] = workspace_id
+        
+        if project_id:
+            condition["project_id"] = project_id
             
-        return self.file_model.get(**conditions)
+
+        return self.file_model.get(**condition)
 
     def filter_files(self, **conditions) -> QuerySet:
         return self.file_model.filter(**conditions)

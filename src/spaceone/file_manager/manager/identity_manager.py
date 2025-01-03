@@ -22,13 +22,15 @@ class IdentityManager(BaseManager):
             token=system_token,
         )
 
-    # def check_project(self, project_id, domain_id):
-    #     system_token = config.get_global("TOKEN")
-    #     return self.identity_connector.dispatch(
-    #         "Project.check",
-    #         {"project_id": project_id, "domain_id": domain_id},
-    #         token=system_token,
-    #     )
+    def get_project(self, project_id, domain_id):
+        system_token = config.get_global("TOKEN")
+        return  self.identity_connector.dispatch(
+            "Project.get",
+            {"project_id": project_id},x_domain_id=domain_id,
+            token=system_token,
+        )
+        
+        
     
     # def check_user(self, user_id, domain_id):
     #     system_token = config.get_global("TOKEN")

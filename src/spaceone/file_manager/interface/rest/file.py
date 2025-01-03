@@ -1,6 +1,4 @@
-from curses import meta
 import logging
-from os import name
 
 from fastapi import Request, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
@@ -35,26 +33,24 @@ class Files(BaseAPI):
             "token": self.token.credentials,
         }
         params = {
-            "file_id": utils.generate_id('file'),
             "name": file.filename,
             "resource_group": "SYSTEM",
         }
 
         file_svc = FileService(metadata)
-        response: dict = file_svc.add(params)
+        file_info: dict = file_svc.add(params)
         
-        download_url = self.get_download_url(response)
-        
+        resource_group = file_info["resource_group"]
+        file_id = file_info["file_id"]
+
         try:
             file_conn_mgr = FileConnectorManager()
-            await run_in_threadpool(file_conn_mgr.upload_file, download_url, await file.read())
+            await run_in_threadpool(file_conn_mgr.upload_file, resource_group, file_id, await file.read())
         except Exception as e:
-            file_svc.delete(params)
-            raise ERROR_FILE_UPLOAD_FAILED(name=response["name"])
+            file_svc.delete({"file_id":file_id})
+            raise ERROR_FILE_UPLOAD_FAILED(name=file_info["name"])
         
-        response["download_url"] = download_url
-        resp = file_svc.update(response)
-        return resp
+        return file_info
 
     @router.get("/public/{file_id}")
     @exception_handler
@@ -69,25 +65,24 @@ class Files(BaseAPI):
         }
 
         file_svc = FileService(metadata)
-        file_vo: dict = file_svc.get(params)
-
-        download_url = file_vo["download_url"]
-        if not download_url:
-            raise ERROR_FILE_DOWNLOAD_URL_EXIST(file_id=file_id, name=file_vo["name"])
+        file_info: dict = file_svc.get(params)
+        
+        resource_group = file_info["resource_group"]
+        # file_id = file_info["file_id"]
 
         try:
             file_conn_mgr = FileConnectorManager()
-            file_stream = await run_in_threadpool(file_conn_mgr.download_file, download_url)
+            file_stream = await run_in_threadpool(file_conn_mgr.download_file, resource_group, file_id)
             if not file_stream:
-                raise ERROR_FILE_DOWNLOAD_FAILED(name=file_vo["name"])
+                raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
             
         except Exception as e:
-            raise ERROR_FILE_DOWNLOAD_FAILED(name=file_vo["name"])
+            raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
 
         return StreamingResponse(
             content=file_stream,
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f"attachment; filename={file_vo['name']}"}
+            headers={"Content-Disposition": f"attachment; filename={file_info['name']}"}
         )
 
     @router.post("/domain/upload")
@@ -98,26 +93,24 @@ class Files(BaseAPI):
             "token": self.token.credentials,
         }
         params = {
-            "file_id": utils.generate_id('file'),
             "name": file.filename,
             "resource_group": "DOMAIN",
         }
 
         file_svc = FileService(metadata)
-        response: dict = file_svc.add(params)
+        file_info: dict = file_svc.add(params)
         
-        download_url = self.get_download_url(response)
-
+        resource_group = file_info["resource_group"]
+        file_id = file_info["file_id"]
+        
         try:
             file_conn_mgr = FileConnectorManager()
-            await run_in_threadpool(file_conn_mgr.upload_file, download_url, await file.read())
+            await run_in_threadpool(file_conn_mgr.upload_file, resource_group, file_id, await file.read())
         except Exception as e:
-            file_svc.delete(params)
-            raise ERROR_FILE_UPLOAD_FAILED(name=response["name"])
+            file_svc.delete({"file_id":file_id})
+            raise ERROR_FILE_UPLOAD_FAILED(name=file_info["name"])
 
-        response["download_url"] = download_url
-        resp = file_svc.update(response)
-        return resp
+        return file_info
 
     @router.get("/domain/{file_id}")
     @exception_handler
@@ -134,13 +127,11 @@ class Files(BaseAPI):
         file_svc = FileService(metadata)
         file_vo: dict = file_svc.get(params)
         
-        download_url = file_vo["download_url"]
-        if not download_url:
-            raise ERROR_FILE_DOWNLOAD_URL_EXIST(file_id=file_id, name=file_vo["name"]) 
+        resource_group = file_vo["resource_group"]
         
         try:
             file_conn_mgr = FileConnectorManager()
-            file_stream = await run_in_threadpool(file_conn_mgr.download_file, download_url)
+            file_stream = await run_in_threadpool(file_conn_mgr.download_file, resource_group, file_id)
             if not file_stream:
                 raise ERROR_FILE_DOWNLOAD_FAILED(name=file_vo["name"])
         
@@ -150,7 +141,7 @@ class Files(BaseAPI):
 
         return StreamingResponse(
             content=file_stream,
-            media_type="binary/octet-stream",
+            media_type="application/octet-stream",
             headers={"Content-Disposition": f"attachment; filename={file_vo['name']}"}
         )
 
@@ -158,32 +149,27 @@ class Files(BaseAPI):
     @exception_handler
     async def upload_workspace_file(self, request: Request, file: UploadFile = File(...)):
         
-        # params, metdata = self.parse_request(request, self.token.credentials, "file", "add" )
-        # file_svc = FileService(metdata)
-        
         metadata = {
             "token": self.token.credentials,
         }
         params = {
-            "file_id": utils.generate_id('file'),
             "name": file.filename,
             "resource_group": "WORKSPACE",
         }
         file_svc = FileService(metadata)
-        response: dict = file_svc.add(params)
+        file_info: dict = file_svc.add(params)
 
-        download_url = self.get_download_url(response)
+        resource_group = file_info["resource_group"]
+        file_id = file_info["file_id"]
 
         try:
             file_conn_mgr = FileConnectorManager()
-            await run_in_threadpool(file_conn_mgr.upload_file, download_url, await file.read())
+            await run_in_threadpool(file_conn_mgr.upload_file, resource_group, file_id, await file.read())
         except Exception as e:
-            file_svc.delete(params)
-            raise ERROR_FILE_UPLOAD_FAILED(name=response["name"])
+            file_svc.delete({"file_id":file_id})
+            raise ERROR_FILE_UPLOAD_FAILED(name=file_info["name"])
         
-        response["download_url"] = download_url
-        resp = file_svc.update(response)
-        return resp
+        return file_info
 
     @router.get("/workspace/{file_id}")
     @exception_handler
@@ -198,46 +184,88 @@ class Files(BaseAPI):
         }
 
         file_svc = FileService(metadata)
-        file_vo: dict = file_svc.get(params)
+        file_info: dict = file_svc.get(params)
 
-        download_url = file_vo["download_url"]
-        if not download_url:
-            raise ERROR_FILE_DOWNLOAD_URL_EXIST(file_id=file_id, name=file_vo["name"])
-        
+        resource_group = file_info["resource_group"]
+
         try:
             file_conn_mgr = FileConnectorManager()
-            file_stream = await run_in_threadpool(file_conn_mgr.download_file, download_url)
+            file_stream = await run_in_threadpool(file_conn_mgr.download_file, resource_group, file_id)
             if not file_stream:
-                raise ERROR_FILE_DOWNLOAD_FAILED(name=file_vo["name"])
+                raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
         except Exception as e:
-            raise ERROR_FILE_DOWNLOAD_FAILED(name=file_vo["name"])    
+            raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])    
 
 
         return StreamingResponse(
             content=file_stream,
-            media_type="binary/octet-stream",
-            headers={"Content-Disposition": f"attachment; filename={file_vo['name']}"}
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f"attachment; filename={file_info['name']}"}
         )
 
-    def get_download_url(self, response: dict ) -> str:
+
+    @router.post("/project/upload")
+    @exception_handler
+    async def upload_project_file(self, project_id:str, request: Request, file: UploadFile = File(...)):
         
-        resource_group = response["resource_group"]
-        file_id = response["file_id"]
+        metadata = {
+            "token": self.token.credentials,
+        }
+        params = {
+            "name": file.filename,
+            "resource_group": "PROJECT",
+        }
         
-        if resource_group == "SYSTEM":
-            download_url = "/files/public/" + file_id
-        elif resource_group == "DOMAIN":
-            domain_id = response["domain_id"]
-            download_url = "/files/domain/" + domain_id + "/" + file_id
-        elif resource_group == "WORKSPACE" or resource_group == "PROJECT":
-            domain_id = response["domain_id"]
-            workspace_id = response["workspace_id"]
-            download_url = "/files/domain/" + domain_id + "/workspace/" + workspace_id + "/" + file_id
-        # elif resource_group == "PROJECT":
-        #     domain_id = response["domain_id"]
-        #     project_id = response["project_id"]
-        #     download_url = "/files/domain/" + domain_id + "/workspace/" + workspace_id + "/project/"+ project_id + "/" +  file_id
+        
+        if project_id:
+            params["project_id"] = project_id
         else:
-            raise ERROR_NOT_SUPPORTED_RESOURCE_GROUP(resource_group=resource_group)
+            params["project_id"] = "*"
         
-        return download_url
+        file_svc = FileService(metadata)
+        file_info: dict = file_svc.add(params)
+
+        resource_group = file_info["resource_group"]
+        file_id = file_info["file_id"]
+
+        try:
+            file_conn_mgr = FileConnectorManager()
+            await run_in_threadpool(file_conn_mgr.upload_file, resource_group, file_id, await file.read())
+        except Exception as e:
+            file_svc.delete({"file_id":file_id})
+            raise ERROR_FILE_UPLOAD_FAILED(name=file_info["name"])
+        
+        return file_info
+
+    @router.get("/project/{file_id}")
+    @exception_handler
+    async def download_project_file(self, file_id:str, token:str, request: Request):
+
+        metadata = {
+            "token": token,
+        }
+        params = {
+            "file_id": file_id,
+            "resource_group": "WORKSPACE",
+        }
+
+        file_svc = FileService(metadata)
+        file_info: dict = file_svc.get(params)
+
+        resource_group = file_info["resource_group"]
+        
+        try:
+            file_conn_mgr = FileConnectorManager()
+            file_stream = await run_in_threadpool(file_conn_mgr.download_file, resource_group, file_id)
+            if not file_stream:
+                raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
+        except Exception as e:
+            raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])    
+
+
+        return StreamingResponse(
+            content=file_stream,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f"attachment; filename={file_info['name']}"}
+        )
+

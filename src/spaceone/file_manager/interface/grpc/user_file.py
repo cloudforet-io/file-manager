@@ -9,30 +9,30 @@ class UserFile(BaseAPI, userfile_pb2_grpc.UserFileServicer):
 
     def update(self, request, context):
         params, metadata = self.parse_request(request, context)
-        file_svc = UserFileService(metadata)
-        response: dict = file_svc.update(params)
+        user_file_svc = UserFileService(metadata)
+        response: dict = user_file_svc.update(params)
         return self.dict_to_message(response)
 
     def delete(self, request, context):
         params, metadata = self.parse_request(request, context)
-        file_svc = UserFileService(metadata)
-        file_svc.delete(params)
+        user_file_svc = UserFileService(metadata)
+        user_file_svc.delete(params)
         return self.empty()
 
     def get(self, request, context):
         params, metadata = self.parse_request(request, context)
-        file_svc = UserFileService(metadata)
-        response: dict = file_svc.get(params)
+        user_file_svc = UserFileService(metadata)
+        response: dict = user_file_svc.get(params)
         return self.dict_to_message(response)
 
     def list(self, request, context):
         params, metadata = self.parse_request(request, context)
-        file_svc = UserFileService(metadata)
-        response: dict = file_svc.list(params)
+        user_file_svc = UserFileService(metadata)
+        response: dict = user_file_svc.list(params)
         return self.dict_to_message(response)
 
     def stat(self, request, context):
         params, metadata = self.parse_request(request, context)
-        file_svc = UserFileService(metadata)
-        response: dict = file_svc.stat(params)
+        user_file_svc = UserFileService(metadata)
+        response: dict = user_file_svc.stat(params)
         return self.dict_to_message(response)

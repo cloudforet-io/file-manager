@@ -1,4 +1,5 @@
 import logging
+from fastapi.utils import generate_unique_id
 from mongoengine import *
 
 from spaceone.core.model.mongo_model import MongoModel
@@ -16,27 +17,27 @@ class FileReference(EmbeddedDocument):
 
 class File(MongoModel):
     file_id = StringField(max_length=40, generate_id="file", unique=True)
-    file_type = StringField(max_length=40, null=True, default=None)
     name = StringField(max_length=255, required=True)
-    download_url = StringField(null=True, default=None)
     tags = DictField()
     reference = EmbeddedDocumentField(FileReference, null=True, default=None)
     resource_group = StringField(
         max_length=40, choices=("SYSTEM", "DOMAIN", "WORKSPACE", "PROJECT")
     )
-    workspace_id = StringField(max_length=40, null=True, default=None)
     domain_id = StringField(max_length=40, null=True, default=None)
+    workspace_id = StringField(max_length=40, null=True, default=None)
+    project_id = StringField(max_length=40, null=True, default=None)
     created_at = DateTimeField(auto_now_add=True)
 
     meta = {
-        "updatable_fields": ["download_url", "tags", "reference"],
+        "updatable_fields": ["tags", "reference"],
         "minimal_fields": [
             "file_id",
             "name",
             "reference",
             "resource_group",
-            "workspace_id",
             "domain_id",
+            "workspace_id",
+            "project_id",
         ],
         "change_query_keys": {
             "resource_type": "reference.resource_type",
@@ -44,11 +45,11 @@ class File(MongoModel):
         },
         "ordering": ["name"],
         "indexes": [
-            "file_id",
             "reference.resource_type",
             "reference.resource_id",
             "resource_group",
-            "workspace_id",
             "domain_id",
+            "workspace_id",
+            "project_id",
         ],
     }

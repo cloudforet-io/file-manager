@@ -22,7 +22,7 @@ class UserFileService(BaseService):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.userfile_mgr = UserFileManager()
+        self.user_file_mgr = UserFileManager()
         self.identity_mgr = IdentityManager()
 
     @transaction(
@@ -38,29 +38,16 @@ class UserFileService(BaseService):
                 'name': 'str',              # required
                 'reference': 'dict',
                 'tags': 'dict',
-                'user_id': 'str'            # injected from auth
-                'domain_id': 'str'          # injected from auth
+                'domain_id': 'str',         # injected from auth
+                'user_id': 'str',           # injected from auth
             }
         Returns:
             UserFileResponse:
         """
 
-        role_type = self.transaction.get_meta("authorization.role_type")
-        user_id = self.transaction.get_meta("authorization.user_id")
-        
-        if role_type != "USER":
-            raise ERROR_NOT_AUTHORIZATION_USER(user_id=params.user_id, domain_id=params.domain_id)
-        
-        if user_id != params.user_id:
-            raise ERROR_NOT_MATCH_USER_ID(user_id=params.user_id, domain_id=params.domain_id)
-        
-        # self.identity_mgr.check_user(params.user_id, params.domain_id)
-        
-        file_vo = self.userfile_mgr.create_file(params.dict())
+        user_file_vo = self.user_file_mgr.create_file(params.dict())
+        return UserFileResponse(**user_file_vo.to_dict())
 
-        return UserFileResponse(**file_vo.to_dict())
-    
-    
     @transaction(
         permission="file-manager:UserFile.write",
         role_types=[
@@ -85,16 +72,13 @@ class UserFileService(BaseService):
             UserFileResponse:
         """
 
-        file_vo = self.userfile_mgr.get_file( 
+        file_vo = self.user_file_mgr.get_file(
             params.file_id,
             params.domain_id, 
             params.user_id
         )
         
-        if file_vo is None:
-            raise ERROR_NOT_FOUND(key=params.file_id, value=params.file_id)
-        
-        file_vo = self.userfile_mgr.update_file_by_vo(params.dict(exclude_unset=True), file_vo)
+        file_vo = self.user_file_mgr.update_file_by_vo(params.dict(exclude_unset=True), file_vo)
 
         return UserFileResponse(**file_vo.to_dict())
 
@@ -117,7 +101,7 @@ class UserFileService(BaseService):
             None:
         """
 
-        file_vo = self.userfile_mgr.get_file(
+        user_file_vo = self.user_file_mgr.get_file(
             params.file_id,
             params.domain_id,
             params.user_id,
@@ -125,9 +109,9 @@ class UserFileService(BaseService):
         
         try:
             file_conn_mgr = FileConnectorManager()
-            file_conn_mgr.delete_file(file_vo.download_url)
+            file_conn_mgr.delete_file("user_file", user_file_vo.file_id)
         except Exception as e:
-            _LOGGER.error(f"[delete] Failed to delete file: {file_vo.download_url}")
+            _LOGGER.error(f"[delete] Failed to delete file: {user_file_vo.file_id}")
             raise ERROR_FILE_DELETE_FAILED(name=download_url)
         
         self.userfile_mgr.delete_file_by_vo(file_vo)
@@ -136,7 +120,6 @@ class UserFileService(BaseService):
         permission="file-manager:UserFile.read",
         role_types=["USER"],
     )
-    # @change_value_by_rule("APPEND", "domain_id", "*")
     @convert_model
     def get(self, params: UserFileGetRequest) -> Union[UserFileResponse, dict]:
         """Get file
@@ -164,7 +147,6 @@ class UserFileService(BaseService):
         permission="file-manager:UserFile.read",
         role_types=["USER"],
     )
-    # @change_value_by_rule("APPEND", "domain_id", "*")
     @append_query_filter(
         [
             "file_id",
@@ -205,8 +187,6 @@ class UserFileService(BaseService):
         permission="file-manager:UserFile.read",
         role_types=["USER"],
     )
-    # @change_value_by_rule("APPEND", "domain_id", "*")
-    # @change_value_by_rule("APPEND", "workspace_id", "*")
     @append_query_filter(["domain_id", "user_id"])
     @append_keyword_filter(["file_id", "name"])
     @convert_model
@@ -226,10 +206,3 @@ class UserFileService(BaseService):
         query = params.query or {}
         return self.userfile_mgr.stat_files(query)
 
-    # @staticmethod
-    # def _get_file_type(file_name: str) -> Union[str, None]:
-    #     file_name_split = file_name.split(".")
-    #     if len(file_name_split) == 1:
-    #         return None
-    #     else:
-    #         return file_name_split[-1]

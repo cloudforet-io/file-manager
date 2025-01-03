@@ -15,9 +15,8 @@ class UserFileReference(EmbeddedDocument):
 
 
 class UserFile(MongoModel):
-    file_id = StringField(max_length=40, generate_id="file", unique=True)
+    file_id = StringField(max_length=40, generate_id="user-file", unique=True)
     name = StringField(max_length=255, required=True)
-    download_url = StringField(null=True, default=None)
     tags = DictField()
     reference = EmbeddedDocumentField(UserFileReference, null=True, default=None)
     domain_id = StringField(max_length=40, null=True, default=None)
@@ -25,7 +24,7 @@ class UserFile(MongoModel):
     created_at = DateTimeField(auto_now_add=True)
 
     meta = {
-        "updatable_fields": ["download_url", "tags", "reference"],
+        "updatable_fields": ["tags", "reference"],
         "minimal_fields": [
             "file_id",
             "name",

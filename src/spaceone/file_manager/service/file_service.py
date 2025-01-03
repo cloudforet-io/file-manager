@@ -1,7 +1,7 @@
 import logging
-from math import log
+
+from signal import raise_signal
 from typing import Union
-from xml import dom
 
 from spaceone.core import utils
 from spaceone.core.service import *
@@ -45,34 +45,31 @@ class FileService(BaseService):
                 'name': 'str',              # required
                 'reference': 'dict',
                 'tags': 'dict',
-                'workspace_id': 'str',      # injected from auth
+                'resource_group': 'str',    # required
                 'domain_id': 'str'          # injected from auth
+                'workspace_id': 'str',      # injected from auth
+                'project_id': 'str'         # injected from auth
             }
 
         Returns:
             FileResponse:
         """
 
-        # role_type = self.transaction.get_meta("authorization.role_type")
         resource_group = params.resource_group
         
         if resource_group == "SYSTEM":
             params.domain_id = "*"
             params.workspace_id = "*"
-            params.resource_group = "SYSTEM"
         elif resource_group == "DOMAIN":
             params.workspace_id = "*"
-            params.resource_group = "DOMAIN"
         elif resource_group == "WORKSPACE" :
             self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
-            params.resource_group = "WORKSPACE"
-        # elif resource_group == "PROJECT":
-        #     self.identity_mgr.check_project(params.project_id, params.domain_id)
-        #     params.resource_group = "PROJECT"
-        else:
-            raise ERROR_NOT_SUPPORTED_RESOURCE_GROUP(resource_group=resource_group)
+            params.project_id = "*"
+        elif resource_group == "PROJECT":
+            if params.project_id != "*":
+                self.identity_mgr.get_project(params.project_id, params.domain_id)
 
-        
+
         file_vo = self.file_mgr.create_file(params.dict())
         return FileResponse(**file_vo.to_dict())
 
@@ -95,8 +92,9 @@ class FileService(BaseService):
                 'reference': 'dict',
                 'tags': 'dict',
                 'download_url': 'str',
-                'workspace_id': 'str',      # injected from auth
                 'domain_id': 'str'          # injected from auth
+                'workspace_id': 'str',      # injected from auth
+                'project_id': 'str'         # injected from auth
             }
 
         Returns:
@@ -107,6 +105,8 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
+            params.project_id,
+            
         )
 
         file_vo = self.file_mgr.update_file_by_vo(
@@ -131,8 +131,9 @@ class FileService(BaseService):
         Args:
             params (FileDeleteRequest): {
                 'file_id': 'str',           # required
-                'workspace_id': 'str',      # injected from auth
                 'domain_id': 'str'          # injected from auth
+                'workspace_id': 'str',      # injected from auth
+                'project_id': 'str'         # injected from auth
             }
 
         Returns:
@@ -143,13 +144,18 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
+            params.project_id,
         )
+        
+        resource_group = file_vo["resource_group"]
+        file_id = file_vo["file_id"]
+        
         try:
-            
             file_conn_mgr = FileConnectorManager()
-            file_conn_mgr.delete_file(file_vo.download_url)
+            file_conn_mgr.delete_file(resource_group, file_id)
         except Exception as e:
             logging.error(f'[ERROR] Failed to delete file : {file_vo.name} ({file_vo.file_id})')
+            raise ERROR_FILE_DELETE_FAILED(file_id=file_id)
 
         self.file_mgr.delete_file_by_vo(file_vo)
 
@@ -263,11 +269,3 @@ class FileService(BaseService):
 
         query = params.query or {}
         return self.file_mgr.stat_files(query)
-
-    # @staticmethod
-    # def _get_file_type(file_name: str) -> Union[str, None]:
-    #     file_name_split = file_name.split(".")
-    #     if len(file_name_split) == 1:
-    #         return None
-    #     else:
-    #         return file_name_split[-1]

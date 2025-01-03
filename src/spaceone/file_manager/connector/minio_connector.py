@@ -52,20 +52,9 @@ class MinIOS3Connector(FileBaseConnector):
         
         self.bucket_name = bucket_name
         
-    def get_upload_url(self, file_id, file_name):
-        object_name = self._generate_object_name(file_id, file_name)
-        response = self.client.generate_presigned_post(self.bucket_name, object_name)
-        return response["url"], response["fields"]
-    
-    def get_download_url(self, file_id: str, file_name: str) -> str:
-        object_name = self._generate_object_name(file_id, file_name)
-        response = self.client.generate_presigned_url(
-            "get_object", Params={"Bucket": self.bucket_name, "Key": object_name}, ExpiresIn=86400
-        )
-        return response
-    
-    def check_file(self, file_id, file_name):
-        object_name = self._generate_object_name(file_id, file_name)
+    def check_file(self, resource_group, file_id):
+        
+        object_name = self._generate_object_name(resource_group, file_id)
         try:
             self.client.get_object(Bucket=self.bucket_name, Key=object_name)
             return True
@@ -73,24 +62,34 @@ class MinIOS3Connector(FileBaseConnector):
             _LOGGER.debug(f"[check_file] get_object error: {e}")
             return False
     
-    def delete_file(self, file_id, file_name):
-        object_name = self._generate_object_name(file_id, file_name)
+    def delete_file(self, resource_group, file_id):
+        object_name = self._generate_object_name(resource_group, file_id)
         self.client.delete_object(Bucket=self.bucket_name, Key=object_name)
 
     @staticmethod
-    def _generate_object_name(file_id, file_name):
-        return f"{file_id}/{file_name}"
+    def _generate_object_name(resource_group:str, file_id: str):
+        if resource_group == "SYSTEM":
+            return f"/files/public/{file_id}"
+        elif resource_group == "DOMAIN":
+            return f"/files/domain/{file_id}"
+        elif resource_group == "WORKSPACE":
+            return f"/files/workspace/{file_id}"
+        elif resource_group == "PROJECT":
+            return f"/files/project/{file_id}"
 
-    def upload_file(self, remote_file_path:str, data: bytes) -> None:
+
+    def upload_file(self, resource_group:str, file_id:str, data: bytes) -> None:
+        object_name = self._generate_object_name(resource_group, file_id)
         file_obj =  BytesIO(data)
         if self.client is None:
             raise ERROR_CONNECTOR_CONFIGURATION(backend="MinIOS3Connector")
-        self.client.upload_fileobj(file_obj, self.bucket_name, remote_file_path)
+        self.client.upload_fileobj(file_obj, self.bucket_name, object_name)
     
-    def download_file(self, remote_file_path:str) :
+    def download_file(self, resource_group:str, file_id:str) :
         
+        object_name = self._generate_object_name(resource_group, file_id)
         if self.client is None:
             raise ERROR_CONNECTOR_CONFIGURATION(backend="MinIOS3Connector")
 
-        obj = self.client.get_object(Bucket=self.bucket_name, Key=remote_file_path)
+        obj = self.client.get_object(Bucket=self.bucket_name, Key=object_name)
         return obj["Body"]
