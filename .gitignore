@@ -7,6 +7,7 @@ build
 *.whl
 *.log
 .idea
+.vscode
 .DS_Store
 __pycache__
 venv
