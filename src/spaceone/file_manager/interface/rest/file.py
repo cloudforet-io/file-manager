@@ -229,14 +229,14 @@ class Files(BaseAPI):
         elif resource_group == "DOMAIN":
             domain_id = response["domain_id"]
             download_url = "/files/domain/" + domain_id + "/" + file_id
-        elif resource_group == "WORKSPACE":
+        elif resource_group == "WORKSPACE" or resource_group == "PROJECT":
             domain_id = response["domain_id"]
             workspace_id = response["workspace_id"]
             download_url = "/files/domain/" + domain_id + "/workspace/" + workspace_id + "/" + file_id
-        elif resource_group == "PROJECT":
-            domain_id = response["domain_id"]
-            project_id = response["project_id"]
-            download_url = "/files/domain/" + domain_id + "/project/"+ project_id + "/" +  file_id
+        # elif resource_group == "PROJECT":
+        #     domain_id = response["domain_id"]
+        #     project_id = response["project_id"]
+        #     download_url = "/files/domain/" + domain_id + "/workspace/" + workspace_id + "/project/"+ project_id + "/" +  file_id
         else:
             raise ERROR_NOT_SUPPORTED_RESOURCE_GROUP(resource_group=resource_group)
         

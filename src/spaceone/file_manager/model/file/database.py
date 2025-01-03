@@ -16,6 +16,7 @@ class FileReference(EmbeddedDocument):
 
 class File(MongoModel):
     file_id = StringField(max_length=40, generate_id="file", unique=True)
+    file_type = StringField(max_length=40, null=True, default=None)
     name = StringField(max_length=255, required=True)
     download_url = StringField(null=True, default=None)
     tags = DictField()
@@ -25,7 +26,6 @@ class File(MongoModel):
     )
     workspace_id = StringField(max_length=40, null=True, default=None)
     domain_id = StringField(max_length=40, null=True, default=None)
-    project_id =   StringField(max_length=40, null=True, default=None)
     created_at = DateTimeField(auto_now_add=True)
 
     meta = {
@@ -37,7 +37,6 @@ class File(MongoModel):
             "resource_group",
             "workspace_id",
             "domain_id",
-            "project_id",
         ],
         "change_query_keys": {
             "resource_type": "reference.resource_type",
@@ -50,7 +49,6 @@ class File(MongoModel):
             "reference.resource_id",
             "resource_group",
             "workspace_id",
-            "project_id",
             "domain_id",
         ],
     }
