@@ -12,52 +12,45 @@ class UserFileManager(BaseManager):
         super().__init__(*args, **kwargs)
         self.user_file_model = UserFile
 
-    def create_file(self, params: dict) -> UserFile:
+    def create_user_file(self, params: dict) -> UserFile:
         def _rollback(vo: UserFile) -> None:
-            _LOGGER.info(f"[ROLLBACK] Delete file : {vo.name} ({vo.file_id})")
+            _LOGGER.info(f"[ROLLBACK] Delete user_file : {vo.name} ({vo.file_id})")
             vo.delete()
 
-        file_vo: UserFile = self.user_file_model.create(params)
-        self.transaction.add_rollback(_rollback, file_vo)
+        user_file_vo: UserFile = self.user_file_model.create(params)
+        self.transaction.add_rollback(_rollback, user_file_vo)
 
-        return file_vo
+        return user_file_vo
 
-    def update_file_by_vo(self, params: dict, file_vo: UserFile) -> UserFile:
+    def update_user_file_by_vo(self, params: dict, user_file_vo: UserFile) -> UserFile:
         def _rollback(old_data: dict):
             _LOGGER.info(
-                f'[ROLLBACK] Revert Data : {old_data["name"]} ({old_data["file_id"]})'
+                f'[ROLLBACK] Revert Data : {old_data["name"]} ({old_data["user_file_id"]})'
             )
-            file_vo.update(old_data)
+            user_file_vo.update(old_data)
 
-        self.transaction.add_rollback(_rollback, file_vo.to_dict())
+        self.transaction.add_rollback(_rollback, user_file_vo.to_dict())
 
-        return file_vo.update(params)
+        return user_file_vo.update(params)
 
     @staticmethod
-    def delete_file_by_vo(file_vo: UserFile) -> None:
-        file_vo.delete()
+    def delete_user_file_by_vo(user_file_vo: UserFile) -> None:
+        user_file_vo.delete()
 
     def get_file(
         self,
-        file_id: str,
-        domain_id: str = None,
-        user_id: str = None,
+        user_file_id: str,
+        domain_id: str,
+        user_id: str,
     ) -> UserFile:
-        conditions = {"file_id": file_id}
 
-        if domain_id:
-            conditions["domain_id"] = domain_id
+        return self.user_file_model.get(user_file_id=user_file_id, domain_id=domain_id, user_id=user_id)
 
-        if user_id:
-            conditions["user_id"] = user_id
-
-        return self.user_file_model.get(**conditions)
-
-    def filter_files(self, **conditions) -> QuerySet:
+    def filter_user_files(self, **conditions) -> QuerySet:
         return self.user_file_model.filter(**conditions)
 
-    def list_files(self, query: dict) -> dict:
+    def list_user_files(self, query: dict) -> dict:
         return self.user_file_model.query(**query)
 
-    def stat_files(self, query: dict) -> dict:
+    def stat_user_files(self, query: dict) -> dict:
         return self.user_file_model.stat(**query)

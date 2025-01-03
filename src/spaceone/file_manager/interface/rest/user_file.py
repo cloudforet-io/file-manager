@@ -1,5 +1,4 @@
 
-from curses import meta
 import logging
 
 from fastapi import Request, Depends, File, UploadFile
@@ -30,33 +29,27 @@ class UserFiles(BaseAPI):
     @exception_handler
     async def upload_user_file(self, request: Request, file: UploadFile = File(...)):
         
-        # params, metdata = self.parse_request(request, self.token.credentials, "userfile", "add" )
-
-        # userfile_svc = UserFileService(metdata)
-        
         metadata = {
             "token": self.token.credentials,
         }
         params = {
-            "file_id": utils.generate_id('file'),
             "name": file.filename,
             "resource_group": "USER",
         }
-        userfile_svc = UserFileService(metadata)
-        response: dict = userfile_svc.add(params)
+        user_file_svc = UserFileService(metadata)
+        user_file_info: dict = user_file_svc.add(params)
         
-        download_url = self.get_download_url(response)
+        resource_group = "USER"
+        file_id = user_file_info["file_id"]
         
         try:
             file_conn_mgr = FileConnectorManager()
-            await run_in_threadpool(file_conn_mgr.upload_file, download_url, await file.read())
+            await run_in_threadpool(file_conn_mgr.upload_file, resource_group,file_id, await file.read())
         except Exception as e:
-            userfile_svc.delete(params)
-            raise ERROR_FILE_UPLOAD_FAILED(name=response["name"])
+            user_file_svc.delete({"file_id":file_id})
+            raise ERROR_FILE_UPLOAD_FAILED(name=user_file_info["name"])
         
-        response["download_url"] = download_url
-        resp = userfile_svc.update(response)
-        return resp
+        return user_file_info
 
     @router.get("/user/{file_id}")
     @exception_handler
@@ -69,35 +62,22 @@ class UserFiles(BaseAPI):
             "file_id": file_id,
             "resource_group": "USER",
         }
-        userfile_svc = UserFileService(metadata)
-        file_vo: dict = userfile_svc.get(params)
-
-        download_url = file_vo["download_url"]
-        if not download_url:
-            raise ERROR_FILE_DOWNLOAD_URL_EXIST(file_id=file_id, name=file_vo["name"])
+        user_file_svc = UserFileService(metadata)
+        user_file_info: dict = user_file_svc.get(params)
         
+        resource_group = "USER"
+
         try:
             file_conn_mgr = FileConnectorManager()
-            file_stream = await run_in_threadpool(file_conn_mgr.download_file, download_url)
+            file_stream = await run_in_threadpool(file_conn_mgr.download_file, resource_group, file_id)
             if not file_stream:
-                raise ERROR_FILE_DOWNLOAD_FAILED(name=file_vo["name"])
+                raise ERROR_FILE_DOWNLOAD_FAILED(name=user_file_info["name"])
         
         except Exception as e:
-            raise ERROR_FILE_DOWNLOAD_FAILED(name=file_vo["name"])
-
+            raise ERROR_FILE_DOWNLOAD_FAILED(name=user_file_info["name"])
 
         return StreamingResponse(
             content=file_stream,
-            media_type="binary/octet-stream",
-            headers={"Content-Disposition": f"attachment; filename={file_vo['name']}"}
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f"attachment; filename={user_file_info['name']}"}
         )
-    
-    def get_download_url(self, response: dict ) -> str:
-        
-        file_id = response["file_id"]
-        domain_id = response["domain_id"]
-        user_id = response["user_id"]
-        
-        download_url = "/files/domain/" + domain_id + "/user/"+ user_id + "/" +  file_id
-        
-        return download_url

@@ -1,5 +1,4 @@
 from typing import Union, Literal
-
 from pydantic import BaseModel
 
 __all__ = [
@@ -12,7 +11,6 @@ __all__ = [
 ]
 
 class UserFileAddRequest(BaseModel):
-    file_id: Union[str, None] = None
     name: str 
     domain_id: Union[str, None] = None
     user_id: Union[str, None] = None
@@ -23,7 +21,6 @@ class UserFileUpdateRequest(BaseModel):
     reference: Union[dict, None] = None
     tags: Union[dict, None] = None
     domain_id: Union[str, None] = None
-    download_url: Union[str, None] = None
     user_id: Union[str, None] = None
 
 
