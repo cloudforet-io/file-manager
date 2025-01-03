@@ -40,7 +40,7 @@ class Files(BaseAPI):
             "resource_group": "SYSTEM",
         }
 
-        file_svc = FileService(metdata)
+        file_svc = FileService(metadata)
         response: dict = file_svc.add(params)
         
         download_url = self.get_download_url(response)
