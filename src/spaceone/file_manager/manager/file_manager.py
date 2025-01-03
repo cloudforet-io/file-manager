@@ -42,7 +42,6 @@ class FileManager(BaseManager):
         file_id: str,
         domain_id: str = None,
         workspace_id: str = None,
-        project_id: str = None,
     ) -> File:
         conditions = {"file_id": file_id}
 
@@ -51,9 +50,6 @@ class FileManager(BaseManager):
 
         if workspace_id:
             conditions["workspace_id"] = workspace_id
-            
-        if project_id:
-            conditions["project_id"] = project_id
             
         return self.file_model.get(**conditions)
 

@@ -45,7 +45,6 @@ class FileService(BaseService):
                 'name': 'str',              # required
                 'reference': 'dict',
                 'tags': 'dict',
-                'project_id': 'str',
                 'workspace_id': 'str',      # injected from auth
                 'domain_id': 'str'          # injected from auth
             }
@@ -108,7 +107,6 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
-            params.project_id,
         )
 
         file_vo = self.file_mgr.update_file_by_vo(
@@ -133,7 +131,6 @@ class FileService(BaseService):
         Args:
             params (FileDeleteRequest): {
                 'file_id': 'str',           # required
-                'project_id': 'str',
                 'workspace_id': 'str',      # injected from auth
                 'domain_id': 'str'          # injected from auth
             }
@@ -146,7 +143,6 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
-            params.project_id,
         )
         try:
             
@@ -187,7 +183,6 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
-            params.project_id,
         )
 
         return FileResponse(**file_vo.to_dict())
@@ -211,7 +206,6 @@ class FileService(BaseService):
             "resource_id",
             "domain_id",
             "workspace_id",
-            "project_id",
         ]
     )
     @append_keyword_filter(["file_id", "name"])

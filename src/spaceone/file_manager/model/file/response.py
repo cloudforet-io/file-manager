@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Union, List
+
 from pydantic import BaseModel
 
 from spaceone.core import utils
@@ -10,6 +11,7 @@ __all__ = ["FileResponse", "FilesResponse"]
 
 class FileResponse(BaseModel):
     file_id: Union[str, None] = None
+    file_type: Union[str, None] = None
     name: Union[str, None] = None
     download_url: Union[str, None] = None
     reference: Union[dict, None] = None
@@ -17,7 +19,6 @@ class FileResponse(BaseModel):
     resource_group: Union[ResourceGroup, None] = None
     domain_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
-    project_id: Union[str, None] = None
     created_at: Union[datetime, None] = None
 
     def dict(self, *args, **kwargs):
