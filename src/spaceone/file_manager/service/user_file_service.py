@@ -90,6 +90,10 @@ class UserFileService(BaseService):
             params.domain_id, 
             params.user_id
         )
+        
+        if file_vo is None:
+            raise ERROR_NOT_FOUND(key=params.file_id, value=params.file_id)
+        
         file_vo = self.userfile_mgr.update_file_by_vo(params.dict(exclude_unset=True), file_vo)
 
         return UserFileResponse(**file_vo.to_dict())
