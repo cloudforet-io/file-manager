@@ -60,13 +60,10 @@ class UserFiles(BaseAPI):
 
     @router.get("/user/{file_id}")
     @exception_handler
-    async def download_user_file(self, file_id:str, request: Request):
+    async def download_user_file(self, file_id:str, token:str,  request: Request):
 
-        # params, metdata = self.parse_request(request, self.token.credentials, "userfile", "add" )
-        # userfile_svc = UserFileService(metdata)
-        
         metadata = {
-            "token": self.token.credentials,
+            "token": token,
         }
         params = {
             "file_id": file_id,

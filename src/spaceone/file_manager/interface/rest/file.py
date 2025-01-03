@@ -58,13 +58,10 @@ class Files(BaseAPI):
 
     @router.get("/public/{file_id}")
     @exception_handler
-    async def download_public_file(self, request: Request, file_id: str):
+    async def download_public_file(self, request: Request, file_id: str, token:str):
 
-        # params, metdata = self.parse_request(request, self.token.credentials, "file", "get" )
-        # file_svc = FileService(metdata)
-        
         metadata = {
-            "token": self.token.credentials,
+            "token": token,
         }
         params = {
             "file_id": file_id,
@@ -124,12 +121,10 @@ class Files(BaseAPI):
 
     @router.get("/domain/{file_id}")
     @exception_handler
-    async def download_domain_file(self, file_id:str, request: Request) -> StreamingResponse:
+    async def download_domain_file(self, file_id:str, token:str, request: Request) -> StreamingResponse:
 
-        # params, metdata = self.parse_request(request, self.token.credentials, "file", "get" )
-        
         metadata = {
-            "token": self.token.credentials,
+            "token": token,
         }
         params = {
             "file_id": file_id,
@@ -192,13 +187,10 @@ class Files(BaseAPI):
 
     @router.get("/workspace/{file_id}")
     @exception_handler
-    async def download_workspace_file(self, file_id:str, request: Request):
-
-        # params, metdata = self.parse_request(request, self.token.credentials, "file", "get" )
-        # file_svc = FileService(metdata)
+    async def download_workspace_file(self, file_id:str, token:str, request: Request):
 
         metadata = {
-            "token": self.token.credentials,
+            "token": token,
         }
         params = {
             "file_id": file_id,
