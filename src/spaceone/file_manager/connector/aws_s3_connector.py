@@ -77,7 +77,7 @@ class AWSS3Connector(FileBaseConnector):
             raise ERROR_CONNECTOR_CONFIGURATION(backend="AWSS3Connector")
 
         obj = self.client.get_object(Bucket=self.bucket_name, Key=object_name)
-        return obj["Body"]
+        return obj
 
 
     @staticmethod

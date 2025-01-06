@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 from mongoengine import QuerySet
 
 from spaceone.core.manager import BaseManager
@@ -43,7 +44,7 @@ class FileManager(BaseManager):
         file_id: str,
         domain_id: str,
         workspace_id: str = None,
-        project_id: str = None,
+        project_id: Union[list, str] = None,
     ) -> File:
         
         condition = {

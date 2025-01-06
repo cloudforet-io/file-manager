@@ -135,7 +135,7 @@ class Files(BaseAPI):
 
     @router.get("/project/{file_id}")
     @exception_handler
-    async def download_project_file(self, file_id:str, token:str, request: Request):
+    async def download_project_file(self, file_id:str, token:str, request: Request)-> StreamingResponse:
 
         metadata = {
             "token": token,
@@ -175,15 +175,15 @@ class Files(BaseAPI):
 
         try:
             file_conn_mgr = FileConnectorManager()
-            file_stream = await run_in_threadpool(file_conn_mgr.download_file, resource_group, file_id)
-            if not file_stream:
+            obj = await run_in_threadpool(file_conn_mgr.download_file, resource_group, file_id)
+            if not obj:
                 raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
             
         except Exception as e:
             raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
 
         return StreamingResponse(
-            content=file_stream,
+            content=obj["Body"],
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f"attachment; filename={file_info['name']}"}
+            headers={"Content-Disposition": f"attachment; filename={file_info['name']}", "content-length": str(obj["ContentLength"])}
         )
