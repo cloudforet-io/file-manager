@@ -37,14 +37,14 @@ class UserFileManager(BaseManager):
     def delete_user_file_by_vo(user_file_vo: UserFile) -> None:
         user_file_vo.delete()
 
-    def get_file(
+    def get_user_file(
         self,
-        user_file_id: str,
+        file_id: str,
         domain_id: str,
         user_id: str,
     ) -> UserFile:
 
-        return self.user_file_model.get(user_file_id=user_file_id, domain_id=domain_id, user_id=user_id)
+        return self.user_file_model.get(file_id=file_id, domain_id=domain_id, user_id=user_id)
 
     def filter_user_files(self, **conditions) -> QuerySet:
         return self.user_file_model.filter(**conditions)

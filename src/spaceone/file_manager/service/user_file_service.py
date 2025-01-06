@@ -45,7 +45,7 @@ class UserFileService(BaseService):
             UserFileResponse:
         """
 
-        user_file_vo = self.user_file_mgr.create_file(params.dict())
+        user_file_vo = self.user_file_mgr.create_user_file(params.dict())
         return UserFileResponse(**user_file_vo.to_dict())
 
     @transaction(
@@ -72,15 +72,18 @@ class UserFileService(BaseService):
             UserFileResponse:
         """
 
-        file_vo = self.user_file_mgr.get_file(
+        user_file_vo = self.user_file_mgr.get_user_file(
             params.file_id,
             params.domain_id, 
             params.user_id
         )
         
-        file_vo = self.user_file_mgr.update_file_by_vo(params.dict(exclude_unset=True), file_vo)
+        user_file_vo = self.user_file_mgr.update_user_file_by_vo(
+            params.dict(exclude_unset=True), 
+            user_file_vo
+        )
 
-        return UserFileResponse(**file_vo.to_dict())
+        return UserFileResponse(**user_file_vo.to_dict())
 
     @transaction(
         permission="file-manager:UserFile.write",
@@ -101,7 +104,7 @@ class UserFileService(BaseService):
             None:
         """
 
-        user_file_vo = self.user_file_mgr.get_file(
+        user_file_vo = self.user_file_mgr.get_user_file(
             params.file_id,
             params.domain_id,
             params.user_id,
@@ -109,12 +112,12 @@ class UserFileService(BaseService):
         
         try:
             file_conn_mgr = FileConnectorManager()
-            file_conn_mgr.delete_file("user_file", user_file_vo.file_id)
+            file_conn_mgr.delete_file("USER", user_file_vo.file_id)
         except Exception as e:
             _LOGGER.error(f"[delete] Failed to delete file: {user_file_vo.file_id}")
-            raise ERROR_FILE_DELETE_FAILED(name=download_url)
+            raise ERROR_FILE_DELETE_FAILED(name=user_file_vo["download_url"])
         
-        self.userfile_mgr.delete_file_by_vo(file_vo)
+        self.user_file_mgr.delete_user_file_by_vo(user_file_vo)
 
     @transaction(
         permission="file-manager:UserFile.read",
@@ -135,13 +138,13 @@ class UserFileService(BaseService):
             UserFileResponse:
         """
 
-        file_vo = self.userfile_mgr.get_file(
+        user_file_vo = self.user_file_mgr.get_user_file(
             params.file_id, 
             params.domain_id, 
             params.user_id,
         )
 
-        return UserFileResponse(**file_vo.to_dict())
+        return UserFileResponse(**user_file_vo.to_dict())
 
     @transaction(
         permission="file-manager:UserFile.read",
@@ -178,10 +181,10 @@ class UserFileService(BaseService):
         """
 
         query = params.query or {}
-        file_vos, total_count = self.userfile_mgr.list_files(query)
-        files_info = [file_vo.to_dict() for file_vo in file_vos]
+        user_file_vos, total_count = self.user_file_mgr.list_user_files(query)
+        user_files_info = [user_file_vos.to_dict() for user_file_vo in user_file_vos]
 
-        return UserFilesResponse(results=files_info, total_count=total_count)
+        return UserFilesResponse(results=user_files_info, total_count=total_count)
 
     @transaction(
         permission="file-manager:UserFile.read",
@@ -204,5 +207,5 @@ class UserFileService(BaseService):
         """
 
         query = params.query or {}
-        return self.userfile_mgr.stat_files(query)
+        return self.user_file_mgr.stat_user_files(query)
 
