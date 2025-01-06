@@ -66,7 +66,9 @@ class FileService(BaseService):
             self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
             params.project_id = "*"
         elif resource_group == "PROJECT":
-            if params.project_id != "*":
+            if not params.project_id:
+                params.project_id = "*"
+            else :
                 self.identity_mgr.get_project(params.project_id, params.domain_id)
 
 
@@ -168,8 +170,7 @@ class FileService(BaseService):
             "WORKSPACE_MEMBER",
         ],
     )
-    @change_value_by_rule("APPEND", "domain_id", "*")
-    @change_value_by_rule("APPEND", "workspace_id", "*")
+
     @convert_model
     def get(self, params: FileGetRequest) -> Union[FileResponse, dict]:
         """Get file
@@ -177,18 +178,41 @@ class FileService(BaseService):
         Args:
             params (FileGetRequest): {
                 'file_id': 'str',           # required
+                'resource_group': 'str',
                 'workspace_id': 'str',      # injected from auth
                 'domain_id': 'str'          # injected from auth
+                'project_id': 'str'         # injected from auth
+                'user_projects': 'list'     # injected from auth
             }
 
         Returns:
             FileResponse:
         """
 
+        resource_group = params.resource_group
+        
+        if resource_group == "SYSTEM":
+            params.domain_id = "*"
+            params.workspace_id = "*"
+        elif resource_group == "DOMAIN":
+            params.workspace_id = "*"
+        elif resource_group == "WORKSPACE" :
+            self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
+            params.project_id = "*"
+        elif resource_group == "PROJECT":
+            if not params.project_id:
+                params.project_id = "*"
+            else :
+                self.identity_mgr.get_project(params.project_id, params.domain_id)
+
+
+
+
         file_vo = self.file_mgr.get_file(
             params.file_id,
             params.domain_id,
             params.workspace_id,
+            params.project_id,
         )
 
         return FileResponse(**file_vo.to_dict())
@@ -204,6 +228,7 @@ class FileService(BaseService):
     )
     @change_value_by_rule("APPEND", "domain_id", "*")
     @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @append_query_filter(
         [
             "file_id",
@@ -212,6 +237,7 @@ class FileService(BaseService):
             "resource_id",
             "domain_id",
             "workspace_id",
+            "user_projects",
         ]
     )
     @append_keyword_filter(["file_id", "name"])
@@ -228,6 +254,7 @@ class FileService(BaseService):
                 'resource_id': 'str',
                 'domain_id': 'str',                             # injected from auth
                 'workspace_id': 'str',                          # injected from auth
+                'user_projects': 'list',                        # injected from auth
             }
 
         Returns:
@@ -251,7 +278,8 @@ class FileService(BaseService):
     )
     @change_value_by_rule("APPEND", "domain_id", "*")
     @change_value_by_rule("APPEND", "workspace_id", "*")
-    @append_query_filter(["domain_id", "workspace_id"])
+    @change_value_by_rule("APPEND", "user_projects", "*")
+    @append_query_filter(["domain_id", "workspace_id", "user_projects"])
     @append_keyword_filter(["file_id", "name"])
     @convert_model
     def stat(self, params: FileStatQueryRequest) -> dict:

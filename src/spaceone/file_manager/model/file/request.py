@@ -41,9 +41,11 @@ class FileDeleteRequest(BaseModel):
 
 class FileGetRequest(BaseModel):
     file_id: str
+    resource_group: ResourceGroup
     domain_id: Union[list, str, None] = None
     workspace_id: Union[list, str, None] = None
     project_id: Union[str, None] = None
+    user_projects: Union[list, None] = None
 
 
 class FileSearchQueryRequest(BaseModel):
@@ -55,6 +57,7 @@ class FileSearchQueryRequest(BaseModel):
     domain_id: Union[list, str, None] = None
     workspace_id: Union[list, str, None] = None
     project_id: Union[str, None] = None
+    user_projects: Union[list, None] = None
 
 
 class FileStatQueryRequest(BaseModel):

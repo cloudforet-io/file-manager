@@ -42,6 +42,7 @@ class File(MongoModel):
         "change_query_keys": {
             "resource_type": "reference.resource_type",
             "resource_id": "reference.resource_id",
+            "user_projects": "project_id",
         },
         "ordering": ["name"],
         "indexes": [
