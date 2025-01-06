@@ -29,13 +29,3 @@ class IdentityManager(BaseManager):
             {"project_id": project_id},x_domain_id=domain_id,
             token=system_token,
         )
-        
-        
-    
-    # def check_user(self, user_id, domain_id):
-    #     system_token = config.get_global("TOKEN")
-    #     return self.identity_connector.dispatch(
-    #         "User.check",
-    #         {"user_id": user_id, "domain_id": domain_id},
-    #         token=system_token,
-    #     )

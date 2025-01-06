@@ -1,11 +1,11 @@
-from spaceone.api.file_manager.v1 import userfile_pb2, userfile_pb2_grpc
+from spaceone.api.file_manager.v1 import user_file_pb2, user_file_pb2_grpc
 from spaceone.core.pygrpc import BaseAPI
 from spaceone.file_manager.service.user_file_service import UserFileService
 
 
-class UserFile(BaseAPI, userfile_pb2_grpc.UserFileServicer):
-    pb2 = userfile_pb2
-    pb2_grpc = userfile_pb2_grpc
+class UserFile(BaseAPI, user_file_pb2_grpc.UserFileServicer):
+    pb2 = user_file_pb2
+    pb2_grpc = user_file_pb2_grpc
 
     def update(self, request, context):
         params, metadata = self.parse_request(request, context)

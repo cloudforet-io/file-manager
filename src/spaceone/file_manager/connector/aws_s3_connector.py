@@ -58,16 +58,6 @@ class AWSS3Connector(FileBaseConnector):
         object_name = self._generate_object_name(resource_group, file_id)
         self.client.delete_object(Bucket=self.bucket_name, Key=object_name)
 
-    @staticmethod
-    def _generate_object_name(resource_group:str, file_id: str):
-        if resource_group == "SYSTEM":
-            return f"/files/public/{file_id}"
-        elif resource_group == "DOMAIN":
-            return f"/files/domain/{file_id}"
-        elif resource_group == "WORKSPACE":
-            return f"/files/workspace/{file_id}"
-        elif resource_group == "PROJECT":
-            return f"/files/project/{file_id}"
 
     def upload_file(self, resource_group:str, file_id: str, data: bytes) -> None:
         
@@ -88,3 +78,17 @@ class AWSS3Connector(FileBaseConnector):
 
         obj = self.client.get_object(Bucket=self.bucket_name, Key=object_name)
         return obj["Body"]
+
+
+    @staticmethod
+    def _generate_object_name(resource_group:str, file_id: str):
+        if resource_group == "SYSTEM":
+            return f"/files/public/{file_id}"
+        elif resource_group == "DOMAIN":
+            return f"/files/domain/{file_id}"
+        elif resource_group == "WORKSPACE":
+            return f"/files/workspace/{file_id}"
+        elif resource_group == "PROJECT":
+            return f"/files/project/{file_id}"
+        elif resource_group == "USER":
+            return f"/files/user/{file_id}"
