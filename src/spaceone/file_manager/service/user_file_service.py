@@ -75,7 +75,7 @@ class UserFileService(BaseService):
         user_file_vo = self.user_file_mgr.get_user_file(
             params.file_id,
             params.domain_id, 
-            params.user_id
+            params.user_id,
         )
         
         user_file_vo = self.user_file_mgr.update_user_file_by_vo(
