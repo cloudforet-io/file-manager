@@ -55,7 +55,16 @@ class FileService(BaseService):
             FileResponse:
         """
 
-        resource_group = params.resource_group
+        role_type = self.transaction.get_meta("authorization.role_type")
+        
+        if role_type == "SYSTEM_ADMIN":
+            resource_group = "SYSTEM"
+        elif role_type == "DOMAIN_ADMIN":
+            resource_group = "DOMAIN"
+        elif role_type == "WORKSPACE_OWNER" or role_type == "WORKSPACE_MEMBER":
+            resource_group = "WORKSPACE"
+        else:
+            raise ERROR_PERMISSION_DENIED()
         
         if resource_group == "SYSTEM":
             params.domain_id = "*"
@@ -170,7 +179,6 @@ class FileService(BaseService):
             "WORKSPACE_MEMBER",
         ],
     )
-
     @convert_model
     def get(self, params: FileGetRequest) -> Union[FileResponse, dict]:
         """Get file
@@ -189,8 +197,17 @@ class FileService(BaseService):
             FileResponse:
         """
 
-        resource_group = params.resource_group
+        role_type = self.transaction.get_meta("authorization.role_type")
         
+        if role_type == "SYSTEM_ADMIN":
+            resource_group = "SYSTEM"
+        elif role_type == "DOMAIN_ADMIN":
+            resource_group = "DOMAIN"
+        elif role_type == "WORKSPACE_OWNER" or role_type == "WORKSPACE_MEMBER":
+            resource_group = "WORKSPACE"
+        else:
+            raise ERROR_PERMISSION_DENIED()
+
         if resource_group == "SYSTEM":
             params.domain_id = "*"
             params.workspace_id = "*"
@@ -204,9 +221,6 @@ class FileService(BaseService):
                 params.project_id = "*"
             else :
                 self.identity_mgr.get_project(params.project_id, params.domain_id)
-
-
-
 
         file_vo = self.file_mgr.get_file(
             params.file_id,
