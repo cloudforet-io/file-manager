@@ -150,7 +150,7 @@ class Files(BaseAPI):
         }
         params = {
             "file_id": file_id,
-            "resource_group": "WORKSPACE",
+            "resource_group": "PROJECT",
         }
 
         return await self.download_file(metadata, params)
