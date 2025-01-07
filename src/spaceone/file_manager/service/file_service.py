@@ -116,6 +116,7 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
+            params.project_id
         )
 
         file_vo = self.file_mgr.update_file_by_vo(
@@ -153,6 +154,7 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
+            params.project_id,
         )
         
         resource_group = file_vo["resource_group"]
@@ -177,6 +179,9 @@ class FileService(BaseService):
         ],
     )
 
+    @change_value_by_rule("APPEND", "domain_id", "*")
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def get(self, params: FileGetRequest) -> Union[FileResponse, dict]:
         """Get file
@@ -199,6 +204,7 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
+            params.project_id,
         )
 
         return FileResponse(**file_vo.to_dict())

@@ -46,6 +46,7 @@ class FileManager(BaseManager):
         file_id: str,
         domain_id: str,
         workspace_id: str = None,
+        project_id: str = None,
     ) -> File:
         
         condition = {
