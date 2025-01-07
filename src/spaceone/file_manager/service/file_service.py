@@ -1,7 +1,7 @@
 import logging
 from typing import Union
 
-from spaceone.core import utils
+from spaceone.core import utils, config
 from spaceone.core.service import *
 from spaceone.file_manager.error.custom import *
 from spaceone.file_manager.model.file.request import *
@@ -67,8 +67,10 @@ class FileService(BaseService):
         if resource_group == "SYSTEM":
             params.domain_id = "*"
             params.workspace_id = "*"
+            params.project_id = "*"
         elif resource_group == "DOMAIN":
             params.workspace_id = "*"
+            params.project_id = "*"
         elif resource_group == "WORKSPACE" :
             self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
             params.project_id = "*"
