@@ -168,6 +168,7 @@ class Files(BaseAPI):
             file_conn_mgr = FileConnectorManager()
             await run_in_threadpool(file_conn_mgr.upload_file, resource_group, file_id, await file.read())
         except Exception as e:
+            _LOGGER.error(f'[upload_file] Error: {e}')
             file_svc.delete({"file_id":file_id})
             raise ERROR_FILE_UPLOAD_FAILED(name=file_info["name"])
 
@@ -188,6 +189,7 @@ class Files(BaseAPI):
                 raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
             
         except Exception as e:
+            _LOGGER.error(f'[download_file] Error: {e}')
             raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
 
 
