@@ -159,10 +159,13 @@ class Files(BaseAPI):
         
         try:
 
+            resource_group = params["resource_group"]
+            del params["resource_group"]
+
             file_svc = FileService(metadata)
             file_info: dict = file_svc.add(params)
 
-            resource_group = file_info["resource_group"]
+            # resource_group = file_info["resource_group"]
             file_id = file_info["file_id"]
 
             file_conn_mgr = FileConnectorManager()
@@ -176,10 +179,13 @@ class Files(BaseAPI):
 
     async def download_file(self, metadata, params) -> StreamingResponse:
 
+        resource_group = params["resource_group"]
+        del params["resource_group"]
+
         file_svc = FileService(metadata)
         file_info: dict = file_svc.get(params)
         
-        resource_group = file_info["resource_group"]
+        # resource_group = file_info["resource_group"]
         file_id = file_info["file_id"]
 
         try:
