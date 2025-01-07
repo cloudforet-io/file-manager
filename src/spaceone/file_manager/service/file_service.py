@@ -3,7 +3,7 @@ import logging
 from signal import raise_signal
 from typing import Union
 
-from spaceone.core import utils
+from spaceone.core import utils, config
 from spaceone.core.service import *
 from spaceone.file_manager.error.custom import *
 from spaceone.file_manager.model.file.request import *

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Union, List
 from pydantic import BaseModel
 
-from spaceone.core import utils
+from spaceone.core import utils, config
 
 __all__ = ["UserFileResponse", "UserFilesResponse"]
 
@@ -19,7 +19,9 @@ class UserFileResponse(BaseModel):
     def dict(self, *args, **kwargs):
         data = super().dict(*args, **kwargs)
         data["created_at"] = utils.datetime_to_iso8601(data["created_at"])
-        data["download_url"] = "/files/user/" + data["file_id"]
+        
+        file_manager_url = config.get_global("FILE_MANAGER_URL")
+        data["download_url"] = str(file_manager_url) + "/files/user/" + data["file_id"]
         return data
 
 

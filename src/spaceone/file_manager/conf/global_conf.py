@@ -3,7 +3,7 @@ REST_TITLE = "REST API for File Manager"
 DATABASE_AUTO_CREATE_INDEX = True
 DATABASES = {
     "default": {
-        "db": "file-manager",
+        "db": "dev2-file-manager",
         "host": "localhost",
         "port": 27017,
         "username": "",
@@ -41,3 +41,4 @@ CONNECTORS = {
 
 # System Token Settings
 TOKEN = ""
+FILE_MANAGER_URL = ""
