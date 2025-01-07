@@ -1,6 +1,7 @@
 import logging
 
 
+from urllib.parse import quote
 from typing import Optional
 from fastapi import Request, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
@@ -189,8 +190,15 @@ class Files(BaseAPI):
         except Exception as e:
             raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
 
+
+        filename = quote(file_info['name'])
+        headers = {
+            "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
+            "content-length": str(obj['ContentLength']),
+        }
+
         return StreamingResponse(
             content=obj["Body"],
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f"attachment; filename={file_info['name']}", "content-length": str(obj["ContentLength"])}
+            headers=headers,
         )
