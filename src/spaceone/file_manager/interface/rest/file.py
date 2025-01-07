@@ -1,5 +1,7 @@
 import logging
 
+
+from typing import Optional
 from fastapi import Request, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 from fastapi.concurrency import run_in_threadpool
@@ -114,7 +116,12 @@ class Files(BaseAPI):
 
     @router.post("/project/upload")
     @exception_handler
-    async def upload_project_file(self, project_id:str, request: Request, file: UploadFile = File(...)):
+    async def upload_project_file(
+        self, 
+        request: Request, 
+        file: UploadFile = File(...),
+        project_id: Optional[str] = None, 
+    ):
         
         metadata = {
             "token": self.token.credentials,
