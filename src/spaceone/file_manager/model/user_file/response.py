@@ -21,6 +21,7 @@ class UserFileResponse(BaseModel):
         data["created_at"] = utils.datetime_to_iso8601(data["created_at"])
         
         file_manager_url = config.get_global("FILE_MANAGER_URL")
+        
         data["download_url"] = str(file_manager_url) + "/files/user/" + data["file_id"]
         return data
 
