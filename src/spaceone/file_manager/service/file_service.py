@@ -116,8 +116,6 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
-            params.project_id,
-            
         )
 
         file_vo = self.file_mgr.update_file_by_vo(
@@ -155,7 +153,6 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
-            params.project_id,
         )
         
         resource_group = file_vo["resource_group"]
@@ -226,7 +223,6 @@ class FileService(BaseService):
             params.file_id,
             params.domain_id,
             params.workspace_id,
-            params.project_id,
         )
 
         return FileResponse(**file_vo.to_dict())

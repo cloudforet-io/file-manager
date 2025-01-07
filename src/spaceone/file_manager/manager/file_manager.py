@@ -44,7 +44,6 @@ class FileManager(BaseManager):
         file_id: str,
         domain_id: str,
         workspace_id: str = None,
-        project_id: Union[list, str] = None,
     ) -> File:
         
         condition = {
@@ -55,9 +54,6 @@ class FileManager(BaseManager):
         if workspace_id:
             condition["workspace_id"] = workspace_id
         
-        if project_id:
-            condition["project_id"] = project_id
-            
 
         return self.file_model.get(**condition)
 
