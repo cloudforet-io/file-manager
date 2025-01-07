@@ -29,7 +29,7 @@ class File(MongoModel):
     created_at = DateTimeField(auto_now_add=True)
 
     meta = {
-        "updatable_fields": ["tags", "reference"],
+        "updatable_fields": ["tags", "reference", "project_id"],
         "minimal_fields": [
             "file_id",
             "name",
