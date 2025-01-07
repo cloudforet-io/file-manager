@@ -52,7 +52,6 @@ class Files(BaseAPI):
         }
         params = {
             "file_id": file_id,
-            "resource_group": "SYSTEM",
         }
 
         return await self.download_file(metadata, params)
@@ -81,7 +80,6 @@ class Files(BaseAPI):
         }
         params = {
             "file_id": file_id,
-            "resource_group": "DOMAIN",
         }
         
         return await self.download_file(metadata, params)
@@ -109,7 +107,6 @@ class Files(BaseAPI):
         }
         params = {
             "file_id": file_id,
-            "resource_group": "WORKSPACE",
         }
 
         return await self.download_file(metadata, params)
@@ -150,7 +147,6 @@ class Files(BaseAPI):
         }
         params = {
             "file_id": file_id,
-            "resource_group": "PROJECT",
         }
 
         return await self.download_file(metadata, params)
@@ -158,14 +154,10 @@ class Files(BaseAPI):
     async def upload_file(self, metadata, params, file) :
         
         try:
-
-            resource_group = params["resource_group"]
-            del params["resource_group"]
-
             file_svc = FileService(metadata)
             file_info: dict = file_svc.add(params)
 
-            # resource_group = file_info["resource_group"]
+            resource_group = file_info["resource_group"]
             file_id = file_info["file_id"]
 
             file_conn_mgr = FileConnectorManager()
@@ -179,13 +171,10 @@ class Files(BaseAPI):
 
     async def download_file(self, metadata, params) -> StreamingResponse:
 
-        resource_group = params["resource_group"]
-        del params["resource_group"]
-
         file_svc = FileService(metadata)
         file_info: dict = file_svc.get(params)
         
-        # resource_group = file_info["resource_group"]
+        resource_group = file_info["resource_group"]
         file_id = file_info["file_id"]
 
         try:
