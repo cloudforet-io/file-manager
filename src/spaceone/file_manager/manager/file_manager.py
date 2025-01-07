@@ -2,6 +2,8 @@ import logging
 from typing import Union
 from mongoengine import QuerySet
 
+
+from spaceone.core import config
 from spaceone.core.manager import BaseManager
 from spaceone.file_manager.model.file.database import File
 
@@ -53,7 +55,6 @@ class FileManager(BaseManager):
         
         if workspace_id:
             condition["workspace_id"] = workspace_id
-        
 
         return self.file_model.get(**condition)
 

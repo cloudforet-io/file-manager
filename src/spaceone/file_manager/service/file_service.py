@@ -1,6 +1,4 @@
 import logging
-
-from signal import raise_signal
 from typing import Union
 
 from spaceone.core import utils

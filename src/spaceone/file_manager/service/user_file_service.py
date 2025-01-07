@@ -182,7 +182,7 @@ class UserFileService(BaseService):
 
         query = params.query or {}
         user_file_vos, total_count = self.user_file_mgr.list_user_files(query)
-        user_files_info = [user_file_vos.to_dict() for user_file_vo in user_file_vos]
+        user_files_info = [user_file_vo.to_dict() for user_file_vo in user_file_vos]
 
         return UserFilesResponse(results=user_files_info, total_count=total_count)
 
