@@ -1,2 +1,3 @@
 spaceone-api
 python-multipart
+minio

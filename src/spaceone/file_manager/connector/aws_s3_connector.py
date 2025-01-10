@@ -58,27 +58,23 @@ class AWSS3Connector(FileBaseConnector):
         object_name = self._generate_object_name(resource_group, file_id)
         self.client.delete_object(Bucket=self.bucket_name, Key=object_name)
 
-
     def upload_file(self, resource_group:str, file_id: str, data: bytes) -> None:
-        
         object_name = self._generate_object_name(resource_group, file_id)
-        file_obj =  BytesIO(data)
         
-        if self.client is None:
-            raise ERROR_CONNECTOR_CONFIGURATION(backend="AWSS3Connector")
+        try:
+            file_obj =  BytesIO(data)
+            self.client.upload_fileobj(file_obj, self.bucket_name, object_name)
+        except Exception as e:
+            _LOGGER.error(f'[upload_file] Error: {e}')
+        finally:
+            file_obj.close()
         
-        self.client.upload_fileobj(file_obj, self.bucket_name, object_name)
-    
     def download_file(self, resource_group:str, file_id: str) :
         
         object_name = self._generate_object_name(resource_group, file_id)
-        
-        if self.client is None:
-            raise ERROR_CONNECTOR_CONFIGURATION(backend="AWSS3Connector")
-
         obj = self.client.get_object(Bucket=self.bucket_name, Key=object_name)
         return obj
-
+        
 
     @staticmethod
     def _generate_object_name(resource_group:str, file_id: str):
