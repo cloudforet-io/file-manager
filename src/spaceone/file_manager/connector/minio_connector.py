@@ -1,4 +1,5 @@
 import logging
+from math import log
 from minio import Minio 
 from minio.error import S3Error
 from io import BytesIO
@@ -22,27 +23,21 @@ class MinIOS3Connector(FileBaseConnector):
         endpoint = self.config.get("endpoint")
         access_key_id = self.config.get("minio_access_key_id")
         secret_access_key = self.config.get("minio_secret_access_key")
-        region_name =  self.config.get("region_name")
         
         if endpoint is None:
             raise ERROR_CONNECTOR_CONFIGURATION(backend="MinIOS3Connector")
-        
-        if region_name is None:
-            raise ERROR_CONNECTOR_CONFIGURATION(backend="MinIOS3Connector")
-        
         
         if access_key_id and secret_access_key:
             self.client = Minio(
                 endpoint=endpoint,
                 access_key=access_key_id,
                 secret_key=secret_access_key,
-                region = region_name,
-                secure=True
+                secure=False
             )
         else:
             self.client = Minio(
                 endpoint=endpoint,
-                secure=True
+                secure=False
             )
             
     def _set_bucket(self):
@@ -54,6 +49,7 @@ class MinIOS3Connector(FileBaseConnector):
         self.bucket_name = bucket_name
         if not self.client.bucket_exists(bucket_name):
             self.client.make_bucket(bucket_name)
+            logging.info(f"Bucket {bucket_name} created")
         
     def check_file(self, resource_group, file_id):
         
@@ -76,17 +72,27 @@ class MinIOS3Connector(FileBaseConnector):
         object_name = self._generate_object_name(resource_group, file_id)
         
         try:
-            file_obj =  BytesIO(data)
-            self.client.put_object(file_obj, self.bucket_name, object_name)
+            data_stream = BytesIO(data)
+            data_length = data_stream.getbuffer().nbytes  # Get the size of the data in bytes
+            self.client.put_object(self.bucket_name, object_name,  data_stream, data_length)
         except Exception as e:
             _LOGGER.error(f'[upload_file] Error: {e}')
         finally:
-            file_obj.close()
+            data_stream.close()
     
     def download_file(self, resource_group:str, file_id:str) :
-        object_name = self._generate_object_name(resource_group, file_id)
-        obj = self.client.get_object(Bucket=self.bucket_name, Key=object_name)
-        return obj
+        try:
+            object_name = self._generate_object_name(resource_group, file_id)
+            obj = self.client.get_object(bucket_name=self.bucket_name, object_name=object_name)
+            data = {}
+            data_stream = BytesIO(obj.read())
+            data['Body'] = data_stream
+            data['ContentLength'] = data_stream.getbuffer().nbytes
+            return data
+        except Exception as e:
+            _LOGGER.error(f'[download_file] Error: {e}')
+            return None
+        
 
     @staticmethod
     def _generate_object_name(resource_group:str, file_id: str):
