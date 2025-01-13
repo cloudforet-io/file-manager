@@ -1,6 +1,6 @@
 
 import logging
-
+from urllib.parse import quote
 from fastapi import Request, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 from fastapi.concurrency import run_in_threadpool
@@ -65,6 +65,7 @@ class UserFiles(BaseAPI):
             file_conn_mgr = FileConnectorManager()
             await run_in_threadpool(file_conn_mgr.upload_file, resource_group, file_id, await file.read())
         except Exception as e:
+            _LOGGER.error(f'[upload_file] Error: {e}')
             user_file_svc.delete({"file_id":file_id})
             raise ERROR_FILE_UPLOAD_FAILED(name=user_file_info["name"])
 
@@ -85,10 +86,17 @@ class UserFiles(BaseAPI):
                 raise ERROR_FILE_DOWNLOAD_FAILED(name=user_file_info["name"])
             
         except Exception as e:
+            _LOGGER.error(f'[download_file] Error: {e}')
             raise ERROR_FILE_DOWNLOAD_FAILED(name=user_file_info["name"])
+
+        filename = quote(user_file_info['name'])
+        headers = {
+            "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
+            "content-length": str(obj['ContentLength']),
+        }
 
         return StreamingResponse(
             content=obj["Body"],
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f"attachment; filename={user_file_info['name']}", "content-length": str(obj["ContentLength"])}
+            headers=headers,
         )

@@ -1,6 +1,4 @@
 import logging
-
-
 from urllib.parse import quote
 from typing import Optional
 from fastapi import Request, Depends, File, UploadFile
@@ -187,7 +185,6 @@ class Files(BaseAPI):
             _LOGGER.error(f'[download_file] Error: {e}')
             raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
 
-
         filename = quote(file_info['name'])
         headers = {
             "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
@@ -199,3 +196,5 @@ class Files(BaseAPI):
             media_type="application/octet-stream",
             headers=headers,
         )
+    
+
