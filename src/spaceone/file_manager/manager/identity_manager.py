@@ -11,7 +11,7 @@ class IdentityManager(BaseManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.identity_connector: SpaceConnector = self.locator.get_connector(
-            SpaceConnector, service="identity"
+            SpaceConnector, service="identity", timeout=30
         )
 
     def check_workspace(self, workspace_id, domain_id):
@@ -24,8 +24,9 @@ class IdentityManager(BaseManager):
 
     def get_project(self, project_id, domain_id):
         system_token = config.get_global("TOKEN")
-        return  self.identity_connector.dispatch(
+        return self.identity_connector.dispatch(
             "Project.get",
-            {"project_id": project_id},x_domain_id=domain_id,
+            {"project_id": project_id},
+            x_domain_id=domain_id,
             token=system_token,
         )
