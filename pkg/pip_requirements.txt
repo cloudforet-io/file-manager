@@ -1,3 +1,4 @@
 spaceone-api
 python-multipart
 minio
+google-cloud-storage

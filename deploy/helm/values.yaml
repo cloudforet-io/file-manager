@@ -57,28 +57,33 @@ application:
             aws_secret_access_key: my_secret_key
             region_name: default_region
             bucket_name: default_bucket
+        GCPGCSConnector:
+            service_account_key_json: service_account_key_json
+            project_id: project_id
+            bucket_name: default_bucket
 
 application_rest:
-  BACKEND: AWSS3Connector
-  CONNECTORS:
-    AWSS3Connector:
-      aws_access_key_id: my_key
-      aws_secret_access_key: my_secret_key
-      region_name: default_region
-      bucket_name: default_bucket
+    BACKEND: AWSS3Connector
+    CONNECTORS:
+        AWSS3Connector:
+            aws_access_key_id: my_key
+            aws_secret_access_key: my_secret_key
+            region_name: default_region
+            bucket_name: default_bucket
+        GCPGCSConnector:
+            service_account_key_json: service_account_key_json
+            project_id: project_id
+            bucket_name: default_bucket
 #    BACKEND: ConsulConnector
 #    CONNECTORS:
 #      ConsulConnector:
 #          host: spaceone-consul-server
 #          port: 8500
-          
+
 # Overwrite scheduler config
 application_scheduler: {}
 # Overwrite worker config
 application_worker: {}
-
-
-
 
 ##########################
 # local sidecar
@@ -96,12 +101,10 @@ sidecar:
         #     limits:
         #         memory: "256Mi"
         #         cpu: "50m"
-    grpc: {} 
+    grpc: {}
     rest: {}
     scheduler: {}
     worker: {}
-
-
 
 ##########################
 # Local volumes
@@ -119,21 +122,21 @@ volumes:
 global:
     shared: {}
     backend:
-      sidecar: []
-#        - name: mongos
-#          image: mongo:4.4.0-bionic
-#          command: [ 'mongos', '--config', '/mnt/mongos.yml', '--bind_ip_all' ]
-#          volumeMounts:
-#            - name: mongos-conf
-#              mountPath: /mnt/mongos.yml
-#              subPath: mongos.yml
-#              readOnly: true
-#            - name: mongo-shard-key
-#              mountPath: /opt/mongos/mongo-shard.pem
-#              subPath: mongo-shard.pem
-#              readOnly: true
-#
-      volumes: []
+        sidecar: []
+        #        - name: mongos
+        #          image: mongo:4.4.0-bionic
+        #          command: [ 'mongos', '--config', '/mnt/mongos.yml', '--bind_ip_all' ]
+        #          volumeMounts:
+        #            - name: mongos-conf
+        #              mountPath: /mnt/mongos.yml
+        #              subPath: mongos.yml
+        #              readOnly: true
+        #            - name: mongo-shard-key
+        #              mountPath: /opt/mongos/mongo-shard.pem
+        #              subPath: mongo-shard.pem
+        #              readOnly: true
+        #
+        volumes: []
 #        - name: mongo-shard-key
 #          secret:
 #              defaultMode: 0400
@@ -145,7 +148,7 @@ global:
 #          configMap:
 #              name: shared-conf
 
-    
+
 # Service
 service:
     grpc:
@@ -153,34 +156,34 @@ service:
         annotations:
             nil: nil
         ports:
-            - name: grpc
-              port: 50051
-              targetPort: 50051
-              protocol: TCP
+          - name: grpc
+            port: 50051
+            targetPort: 50051
+            protocol: TCP
     rest:
         type: ClusterIP
         annotations:
             nil: nil
         ports:
-            - name: rest
-              port: 80
-              targetPort: 80
-              protocol: TCP
+          - name: rest
+            port: 80
+            targetPort: 80
+            protocol: TCP
 
 ingress:
-  rest:
-    enabled: false
-    annotations:
-        alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
-        alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0 # replace or leave out
-        alb.ingress.kubernetes.io/scheme: internet-facing
-        alb.ingress.kubernetes.io/target-type: ip 
-        alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:111111111111:certificate/11111111-6c4c-414a-beab-fa87f44dd105"
-        alb.ingress.kubernetes.io/healthcheck-path: "/check"
-        alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
-        external-dns.alpha.kubernetes.io/hostname: monitoring-webhook.example.com
-    servicePort: 80
-    path: /
+    rest:
+        enabled: false
+        annotations:
+            alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+            alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0 # replace or leave out
+            alb.ingress.kubernetes.io/scheme: internet-facing
+            alb.ingress.kubernetes.io/target-type: ip
+            alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:111111111111:certificate/11111111-6c4c-414a-beab-fa87f44dd105"
+            alb.ingress.kubernetes.io/healthcheck-path: "/check"
+            alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600
+            external-dns.alpha.kubernetes.io/hostname: monitoring-webhook.example.com
+        servicePort: 80
+        path: /
 
 ################################
 # volumeMount per deployment
