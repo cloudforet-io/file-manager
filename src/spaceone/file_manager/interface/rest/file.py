@@ -134,7 +134,13 @@ class Files(BaseAPI):
             params["project_id"] = "*"
         
         file_info = await self.upload_file(metadata, params, file)
-        return file_info
+        # file_info가 dict가 아닌 경우 변환
+        if hasattr(file_info, 'to_dict'):
+            return file_info.to_dict()
+        elif isinstance(file_info, dict):
+            return file_info
+        else:
+            return {"file_id": str(file_info)}
 
     @router.get("/project/{file_id}")
     @exception_handler
@@ -180,19 +186,40 @@ class Files(BaseAPI):
             obj = await run_in_threadpool(file_conn_mgr.download_file, resource_group, file_id)
             if not obj:
                 raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
-            
+
         except Exception as e:
             _LOGGER.error(f'[download_file] Error: {e}')
             raise ERROR_FILE_DOWNLOAD_FAILED(name=file_info["name"])
 
+
+
         filename = quote(file_info['name'])
-        headers = {
-            "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
-            "content-length": str(obj['ContentLength']),
-        }
+        
+        # obj 타입에 따라 다른 처리
+        if isinstance(obj, bytes):
+            # bytes 타입인 경우 GCP GCS
+            headers = {
+                "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
+                "content-length": str(len(obj)),
+            }
+            content = iter([obj])
+        elif isinstance(obj, dict) and 'Body' in obj and 'ContentLength' in obj:
+            # AWS S3, MinIO 스타일인 경우
+            headers = {
+                "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
+                "content-length": str(obj['ContentLength']),
+            }
+            content = obj["Body"]
+        else:
+            # 기타 경우
+            headers = {
+                "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
+                "content-length": str(len(obj)) if hasattr(obj, '__len__') else "0",
+            }
+            content = obj if hasattr(obj, '__iter__') else iter([obj])
 
         return StreamingResponse(
-            content=obj["Body"],
+            content=content,
             media_type="application/octet-stream",
             headers=headers,
         )

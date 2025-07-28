@@ -3,8 +3,8 @@ REST_TITLE = "REST API for File Manager"
 DATABASE_AUTO_CREATE_INDEX = True
 DATABASES = {
     "default": {
-        "db": "dev2-file-manager",
-        "host": "localhost",
+        "db": "",
+        "host": "",
         "port": 27017,
         "username": "",
         "password": "",
@@ -20,10 +20,25 @@ CACHES = {
     },
 }
 
-HANDLERS = {}
+HANDLERS = {
+    "authentication": [
+        {
+          "backend": "spaceone.core.handler.authentication_handler:SpaceONEAuthenticationHandler"
+        }
+      ], 
+      "authorization": [
+        {
+          "backend": "spaceone.core.handler.authorization_handler:SpaceONEAuthorizationHandler"
+        }
+      ], 
+      "mutation": [
+        {
+          "backend": "spaceone.core.handler.mutation_handler:SpaceONEMutationHandler"
+        }
+      ]
+}
 
-# BACKEND = "AWSS3Connector"
-BACKEND = "MinIOS3Connector"
+BACKEND = "GCPGCSConnector"  # AWSS3Connector | MinIOS3Connector | GCPGCSConnector
 CONNECTORS = {
     "AWSS3Connector": {
         "backend": "spaceone.file_manager.connector.aws_s3_connector:AWSS3Connector",
@@ -40,10 +55,16 @@ CONNECTORS = {
         "region_name": "<required>",
         "bucket_name": "<required>",
     },
+    "GCPGCSConnector": {
+        "backend": "spaceone.file_manager.connector.gcp_gcs_connector:GCPGCSConnector",
+        "project_id": "<required>",
+        "bucket_name": "<required>",
+        "service_account_key_json": "<required>",
+    },
     "SpaceConnector": {
         "backend": "spaceone.core.connector.space_connector:SpaceConnector",
         "endpoints": {
-            "identity": "grpc://identity:50051",
+            "identity": "grpc://localhost:50051",
         },
     },
 }
