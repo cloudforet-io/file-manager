@@ -33,27 +33,6 @@ CACHES = {
     },
 }
 
-# Handlers
-The application defines handlers for authentication, authorization, and mutation processes.
-
-HANDLERS = {
-    "authentication": [
-        {
-            "backend": "spaceone.core.handler.authentication_handler:SpaceONEAuthenticationHandler"
-        }
-    ], 
-    "authorization": [
-        {
-            "backend": "spaceone.core.handler.authorization_handler:SpaceONEAuthorizationHandler"
-        }
-    ], 
-    "mutation": [
-        {
-            "backend": "spaceone.core.handler.mutation_handler:SpaceONEMutationHandler"
-        }
-    ]
-}
-
 # Backend Connector
 supported connectors is GCPGCSConnector,AWSS3Connector,MinIOS3Connector.
 

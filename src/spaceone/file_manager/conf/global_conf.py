@@ -20,23 +20,6 @@ CACHES = {
     },
 }
 
-HANDLERS = {
-    "authentication": [
-        {
-          "backend": "spaceone.core.handler.authentication_handler:SpaceONEAuthenticationHandler"
-        }
-      ], 
-      "authorization": [
-        {
-          "backend": "spaceone.core.handler.authorization_handler:SpaceONEAuthorizationHandler"
-        }
-      ], 
-      "mutation": [
-        {
-          "backend": "spaceone.core.handler.mutation_handler:SpaceONEMutationHandler"
-        }
-      ]
-}
 
 BACKEND = "GCPGCSConnector"  # AWSS3Connector | MinIOS3Connector | GCPGCSConnector
 CONNECTORS = {
