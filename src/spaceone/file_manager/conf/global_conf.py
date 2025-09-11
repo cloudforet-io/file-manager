@@ -59,7 +59,7 @@ CONNECTORS = {
         "backend": "spaceone.file_manager.connector.gcp_gcs_connector:GCPGCSConnector",
         "project_id": "<required>",
         "bucket_name": "<required>",
-        "service_account_key_json": "<required>",
+        "service_account_key": "<required>",
     },
     "SpaceConnector": {
         "backend": "spaceone.core.connector.space_connector:SpaceConnector",
