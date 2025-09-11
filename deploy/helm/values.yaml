@@ -58,7 +58,7 @@ application:
             region_name: default_region
             bucket_name: default_bucket
         GCPGCSConnector:
-            service_account_key_json: service_account_key_json
+            service_account_key: service_account_key
             project_id: project_id
             bucket_name: default_bucket
 
@@ -71,7 +71,7 @@ application_rest:
             region_name: default_region
             bucket_name: default_bucket
         GCPGCSConnector:
-            service_account_key_json: service_account_key_json
+            service_account_key: service_account_key
             project_id: project_id
             bucket_name: default_bucket
 #    BACKEND: ConsulConnector

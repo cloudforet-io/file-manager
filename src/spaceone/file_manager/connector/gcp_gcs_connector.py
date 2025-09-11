@@ -4,6 +4,7 @@ from typing import Optional
 from google.cloud import storage
 from google.oauth2 import service_account
 from io import BytesIO
+import base64
 
 from spaceone.core.error import *
 from spaceone.file_manager.connector.file_base_connector import FileBaseConnector
@@ -28,20 +29,17 @@ class GCPGCSConnector(FileBaseConnector):
         
         # print(f"config: {self.config}")
         
-        service_account_key_json = self.config.get("service_account_key_json")
+        service_account_key = self.config.get("service_account_key")
+        decoded_key = base64.b64decode(service_account_key).decode('utf-8')
+
         # 2. 프로젝트 ID
         project_id = self.config.get("project_id")
         
-        # _LOGGER.debug(f"설정 확인: config={self.config}")
-        # _LOGGER.debug(f"project_id={project_id}")
-        # _LOGGER.debug(f"service_account_key_json exists={service_account_key_json is not None}")
-        
         if project_id is None:
             raise Exception("GCPGCSConnector configuration error: project_id is required")
-
         try:
                 # JSON 문자열을 딕셔너리로 파싱
-                service_account_info = json.loads(service_account_key_json)
+                service_account_info = json.loads(decoded_key)
                 # 서비스 계정 인증 정보 생성
                 credentials = service_account.Credentials.from_service_account_info(
                     service_account_info
@@ -53,8 +51,8 @@ class GCPGCSConnector(FileBaseConnector):
                     project=project_id
                 )
         except Exception as e:
-            _LOGGER.error(f"GCS 클라이언트 생성 실패: {e}")
-            _LOGGER.error(f"설정 정보: project_id={project_id}, has_key_json={service_account_key_json is not None}")
+            _LOGGER.error(f"GCS client create fail: {e}")
+            _LOGGER.error(f"project_id={project_id}, has_key_json={service_account_key is not None}")
             raise Exception(f"GCPGCSConnector client creation failed: {e}")
 
     def _set_bucket(self):
