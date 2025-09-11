@@ -1,12 +1,10 @@
-# REST API for File Manager
+# File Manager
 
 This document outlines the configuration settings for the **REST API for File Manager** application.
 
 ## Configuration
 
-### REST API Title
-```markdown
-REST_TITLE = "REST API for File Manager"
+
 
 # Database
 Database SettingsThe application uses MongoDB as the default database. Auto-creation of indexes is enabled.
