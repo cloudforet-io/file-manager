@@ -4,7 +4,7 @@ This document outlines the configuration settings for the **REST API for File Ma
 
 ## Configuration
 
-
+```markdown
 
 # Database
 Database SettingsThe application uses MongoDB as the default database. Auto-creation of indexes is enabled.
