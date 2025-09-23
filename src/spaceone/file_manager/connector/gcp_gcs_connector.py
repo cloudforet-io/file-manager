@@ -19,7 +19,6 @@ class GCPGCSConnector(FileBaseConnector):
 
         self.client: Optional[storage.Client] = None
         self.bucket_name: Optional[str] = None
-             
         self._create_client()
         self._set_bucket()
 
@@ -115,15 +114,21 @@ class GCPGCSConnector(FileBaseConnector):
     def download_file(self, resource_group: str, file_id: str):
         if self.client is None:
             raise Exception("GCPGCSConnector not initialized properly")
-            
+
         object_name = self._generate_object_name(resource_group, file_id)
-        
+
         try:
             bucket = self.client.bucket(self.bucket_name)
             blob = bucket.blob(object_name)
-            
+            # 파일 메타데이터 새로고침 (크기 정보 가져오기)
+            blob.reload()
             # 파일 다운로드
-            return blob.download_as_bytes()
+            file_data = blob.download_as_bytes()
+            # AWS S3 스타일 응답 형식으로 반환
+            return {
+                'Body': BytesIO(file_data),
+                'ContentLength': blob.size
+            }
         except Exception as e:
             _LOGGER.error(f'[download_file] Error: {e}')
             raise e
