@@ -26,7 +26,24 @@ class FileConnectorManager(BaseManager):
         self.file_conn.delete_file(resource_group, file_id)
 
     def upload_file(self, resource_group:str, file_id:str , file_binary: bytes) -> None:
-        self.file_conn.upload_file( resource_group, file_id, file_binary)  
+        self.file_conn.upload_file( resource_group, file_id, file_binary)
+
+    def stream_upload_file(self, resource_group: str, file_id: str, file_obj) -> None:
+
+        if hasattr(self.file_conn, 'stream_upload_file'):
+            self.file_conn.stream_upload_file(resource_group, file_id, file_obj)
+        else:
+            # 스트리밍을 지원하지 않는 커넥터의 경우 기존 방식으로 폴백
+            _LOGGER.warning(f"[stream_upload_file] Connector {type(self.file_conn).__name__} does not support streaming, falling back to regular upload")
+            # 청크 단위로 읽어서 메모리 사용량 최적화
+            file_data = b""
+            chunk_size = 8192  # 8KB 청크
+            while True:
+                chunk = file_obj.read(chunk_size)
+                if not chunk:
+                    break
+                file_data += chunk
+            self.file_conn.upload_file(resource_group, file_id, file_data)
 
     def download_file(self, resource_group:str, file_id:str ) :
         return self.file_conn.download_file(resource_group, file_id)

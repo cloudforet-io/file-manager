@@ -15,7 +15,10 @@ class FileBaseConnector(BaseConnector):
     @abc.abstractmethod
     def upload_file(self, resource_group:str, file_id:str, data:bytes) -> None:
         pass
-    
+
+    def stream_upload_file(self, resource_group: str, file_id: str, file_obj) -> None:
+        pass
+
     @abc.abstractmethod
     def download_file(self, resource_group:str, file_id:str ):
         pass

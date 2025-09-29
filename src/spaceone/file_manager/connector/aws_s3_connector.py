@@ -1,5 +1,6 @@
 import logging
 import boto3
+import time
 from io import BytesIO
 import botocore
 
@@ -68,7 +69,62 @@ class AWSS3Connector(FileBaseConnector):
             _LOGGER.error(f'[upload_file] Error: {e}')
         finally:
             file_obj.close()
-        
+
+    def stream_upload_file(self, resource_group: str, file_id: str, file_obj) -> None:
+        object_name = self._generate_object_name(resource_group, file_id)
+
+        try:
+            _LOGGER.info(f"[stream_upload_file] Starting upload to S3: {object_name}")
+
+            # 청크 사이즈 설정 (8MB - S3에서 권장하는 청크 사이즈)
+            chunk_size = 8 * 1024 * 1024  # 8MB
+
+            # 파일 객체 타입에 따른 처리
+            if hasattr(file_obj, 'file'):
+                # FastAPI UploadFile 객체의 경우
+                _LOGGER.debug(f"[stream_upload_file] Detected FastAPI UploadFile object")
+
+                # 임시 파일로 스트리밍 처리
+                stream_buffer = BytesIO()
+                total_size = 0
+
+                # 청크 단위로 읽어서 S3에 업로드
+                while True:
+                    chunk = file_obj.file.read(chunk_size)
+                    if not chunk:
+                        break
+                    stream_buffer.write(chunk)
+                    total_size += len(chunk)
+
+                    # 진행률 로깅 (10MB마다)
+                    if total_size % (10 * 1024 * 1024) == 0 and total_size > 0:
+                        _LOGGER.info(f"[stream_upload_file] Uploaded {total_size // (1024*1024)}MB")
+
+                # 스트림 버퍼를 처음으로 리셋하고 업로드
+                stream_buffer.seek(0)
+
+                # 업로드 시간 측정
+                start_time = time.time()
+                self.client.upload_fileobj(
+                    stream_buffer,
+                    self.bucket_name,
+                    object_name,
+                    ExtraArgs={'ContentType': getattr(file_obj, 'content_type', 'application/octet-stream')}
+                )
+                upload_time = time.time() - start_time
+                stream_buffer.close()
+                _LOGGER.info(f"[stream_upload_file] Upload completed. Size: {total_size // (1024*1024)}MB, Time: {upload_time:.2f}s")
+            else:
+                # 일반 파일 객체의 경우
+                _LOGGER.debug(f"[stream_upload_file] Detected standard file object")
+                start_time = time.time()
+                self.client.upload_fileobj(file_obj, self.bucket_name, object_name)
+                upload_time = time.time() - start_time
+                _LOGGER.info(f"[stream_upload_file] Upload completed in {upload_time:.2f}s")
+        except Exception as e:
+            _LOGGER.error(f'[stream_upload_file] Error: {e}')
+            raise e
+
     def download_file(self, resource_group:str, file_id: str) :
         
         object_name = self._generate_object_name(resource_group, file_id)
