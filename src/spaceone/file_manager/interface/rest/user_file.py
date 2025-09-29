@@ -54,7 +54,9 @@ class UserFiles(BaseAPI):
         return await self.download_file(metadata, params)
     
     async def upload_file(self, metadata, params, file) :
-        
+        user_file_info = None
+        file_id = None
+
         try:
             user_file_svc = UserFileService(metadata)
             user_file_info: dict = user_file_svc.add(params)
@@ -63,11 +65,29 @@ class UserFiles(BaseAPI):
             file_id = user_file_info["file_id"]
 
             file_conn_mgr = FileConnectorManager()
-            await run_in_threadpool(file_conn_mgr.upload_file, resource_group, file_id, await file.read())
+
+            # 스트리밍 업로드 사용 - 청크 단위로 파일 처리
+            _LOGGER.info(f"[upload_file] Starting streaming upload for file_id: {file_id}")
+            await run_in_threadpool(
+                file_conn_mgr.stream_upload_file,
+                resource_group,
+                file_id,
+                file
+            )
+            _LOGGER.info(f"[upload_file] Streaming upload completed for file_id: {file_id}")
+
         except Exception as e:
             _LOGGER.error(f'[upload_file] Error: {e}')
-            user_file_svc.delete({"file_id":file_id})
-            raise ERROR_FILE_UPLOAD_FAILED(name=user_file_info["name"])
+            # 업로드 실패 시 DB에서 파일 정보 삭제
+            if user_file_info and file_id:
+                try:
+                    user_file_svc.delete({"file_id": file_id})
+                except Exception as delete_error:
+                    _LOGGER.error(f'[upload_file] Failed to cleanup file record: {delete_error}')
+
+            # 파일명이 있으면 사용, 없으면 기본 메시지
+            file_name = user_file_info.get("name", "unknown") if user_file_info else params.get("name", "unknown")
+            raise ERROR_FILE_UPLOAD_FAILED(name=file_name)
 
         return user_file_info
 

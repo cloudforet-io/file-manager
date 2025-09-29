@@ -1,5 +1,6 @@
 import logging
 import json
+import time
 from typing import Optional
 from google.cloud import storage
 from google.oauth2 import service_account
@@ -93,23 +94,87 @@ class GCPGCSConnector(FileBaseConnector):
             raise e
 
     def upload_file(self, resource_group: str, file_id: str, data: bytes) -> None:
+        
         if self.client is None:
             raise Exception("GCPGCSConnector not initialized properly")
-            
+
         object_name = self._generate_object_name(resource_group, file_id)
-        
+        _LOGGER.info(f"[upload_file] Starting upload to GCS: {object_name}")
         try:
             bucket = self.client.bucket(self.bucket_name)
             blob = bucket.blob(object_name)
-            
+
             # BytesIO를 사용하여 메모리에서 업로드
             file_obj = BytesIO(data)
             blob.upload_from_file(file_obj)
+            _LOGGER.info(f"[upload_file] Upload completed. Size: {file_obj.getbuffer().nbytes // (1024*1024)}MB")
         except Exception as e:
             _LOGGER.error(f'[upload_file] Error: {e}')
             raise e
         finally:
             file_obj.close()
+
+    def stream_upload_file(self, resource_group: str, file_id: str, file_obj) -> None:
+
+        if self.client is None:
+            raise Exception("GCPGCSConnector not initialized properly")
+
+        object_name = self._generate_object_name(resource_group, file_id)
+
+        try:
+            bucket = self.client.bucket(self.bucket_name)
+            blob = bucket.blob(object_name)
+
+            _LOGGER.info(f"[stream_upload_file] Starting upload to GCS: {object_name}")
+
+            # 청크 사이즈 설정 (8MB - GCS에서 권장하는 청크 사이즈)
+            chunk_size = 8 * 1024 * 1024  # 8MB
+            blob.chunk_size = chunk_size
+
+            # 파일 객체 타입에 따른 처리
+            if hasattr(file_obj, 'file'):
+                # FastAPI UploadFile 객체의 경우
+                _LOGGER.debug(f"[stream_upload_file] Detected FastAPI UploadFile object")
+
+                # 임시 파일로 스트리밍 처리
+                stream_buffer = BytesIO()
+                total_size = 0
+
+                # 청크 단위로 읽어서 GCS에 업로드
+                while True:
+                    chunk = file_obj.file.read(chunk_size)
+                    if not chunk:
+                        break
+                    stream_buffer.write(chunk)
+                    total_size += len(chunk)
+
+                    # 진행률 로깅 (10MB마다)
+                    if total_size % (10 * 1024 * 1024) == 0 and total_size > 0:
+                        _LOGGER.info(f"[stream_upload_file] Uploaded {total_size // (1024*1024)}MB")
+
+                # 스트림 버퍼를 처음으로 리셋하고 업로드
+                stream_buffer.seek(0)
+
+                # 업로드 시간 측정
+                start_time = time.time()
+                blob.upload_from_file(
+                    stream_buffer,
+                    content_type=getattr(file_obj, 'content_type', 'application/octet-stream'),
+                    timeout=300  # 5분 타임아웃
+                )
+                upload_time = time.time() - start_time
+                stream_buffer.close()
+                _LOGGER.info(f"[stream_upload_file] Upload completed. Size: {total_size // (1024*1024)}MB, Time: {upload_time:.2f}s")
+            else:
+                # 일반 파일 객체의 경우
+                _LOGGER.debug(f"[stream_upload_file] Detected standard file object")
+                start_time = time.time()
+                blob.upload_from_file(file_obj, timeout=300)
+                upload_time = time.time() - start_time
+                _LOGGER.info(f"[stream_upload_file] Upload completed in {upload_time:.2f}s")
+        except Exception as e:
+            _LOGGER.error(f'[stream_upload_file] Error: {e}')
+            raise e
 
     def download_file(self, resource_group: str, file_id: str):
         if self.client is None:

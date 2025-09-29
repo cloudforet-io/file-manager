@@ -165,7 +165,17 @@ class Files(BaseAPI):
             file_id = file_info["file_id"]
 
             file_conn_mgr = FileConnectorManager()
-            await run_in_threadpool(file_conn_mgr.upload_file, resource_group, file_id, await file.read())
+            
+            # 스트리밍 업로드 사용 - 청크 단위로 파일 처리
+            _LOGGER.info(f"[upload_file] Starting streaming upload for file_id: {file_id}")
+            await run_in_threadpool(
+                file_conn_mgr.stream_upload_file,
+                resource_group,
+                file_id,
+                file
+            )
+            _LOGGER.info(f"[upload_file] Streaming upload completed for file_id: {file_id}")
+            
         except Exception as e:
             _LOGGER.error(f'[upload_file] Error: {e}')
             file_svc.delete({"file_id":file_id})
