@@ -105,11 +105,16 @@ class AWSS3Connector(FileBaseConnector):
 
                 # 업로드 시간 측정
                 start_time = time.time()
+
+                content_type = getattr(file_obj, 'content_type', 'application/octet-stream')
+                if content_type is None:
+                    content_type = 'application/octet-stream'
+
                 self.client.upload_fileobj(
                     stream_buffer,
                     self.bucket_name,
                     object_name,
-                    ExtraArgs={'ContentType': getattr(file_obj, 'content_type', 'application/octet-stream')}
+                    ExtraArgs={'ContentType': content_type}
                 )
                 upload_time = time.time() - start_time
                 stream_buffer.close()
