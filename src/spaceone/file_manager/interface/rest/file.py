@@ -27,7 +27,7 @@ class Files(BaseAPI):
 
     @router.post("/public/upload")
     @exception_handler
-    def upload_public_file(self, request: Request, file: UploadFile = File(...)):
+    async def upload_public_file(self, request: Request, file: UploadFile = File(...)):
 
         metadata = {
             "token": self.token.credentials,
@@ -42,7 +42,7 @@ class Files(BaseAPI):
 
     @router.get("/public/{file_id}")
     @exception_handler
-    def download_public_file(self, request: Request, file_id: str, token:str):
+    async def download_public_file(self, request: Request, file_id: str, token:str):
 
         metadata = {
             "token": token,
@@ -55,7 +55,7 @@ class Files(BaseAPI):
 
     @router.post("/domain/upload")
     @exception_handler
-    def upload_domain_file(self, request: Request, file: UploadFile = File(...)):
+    async def upload_domain_file(self, request: Request, file: UploadFile = File(...)):
 
         metadata = {
             "token": self.token.credentials,
@@ -70,7 +70,7 @@ class Files(BaseAPI):
 
     @router.get("/domain/{file_id}")
     @exception_handler
-    def download_domain_file(self, file_id:str, token:str, request: Request) -> StreamingResponse:
+    async def download_domain_file(self, file_id:str, token:str, request: Request) -> StreamingResponse:
 
         metadata = {
             "token": token,
@@ -83,7 +83,7 @@ class Files(BaseAPI):
 
     @router.post("/workspace/upload")
     @exception_handler
-    def upload_workspace_file(self, request: Request, file: UploadFile = File(...)):
+    async def upload_workspace_file(self, request: Request, file: UploadFile = File(...)):
 
         metadata = {
             "token": self.token.credentials,
@@ -97,7 +97,7 @@ class Files(BaseAPI):
 
     @router.get("/workspace/{file_id}")
     @exception_handler
-    def download_workspace_file(self, file_id:str, token:str, request: Request):
+    async def download_workspace_file(self, file_id:str, token:str, request: Request):
 
         metadata = {
             "token": token,
@@ -111,7 +111,7 @@ class Files(BaseAPI):
 
     @router.post("/project/upload")
     @exception_handler
-    def upload_project_file(
+    async def upload_project_file(
         self,
         request: Request,
         file: UploadFile = File(...),
@@ -143,7 +143,7 @@ class Files(BaseAPI):
 
     @router.get("/project/{file_id}")
     @exception_handler
-    def download_project_file(self, file_id:str, token:str, request: Request)-> StreamingResponse:
+    async def download_project_file(self, file_id:str, token:str, request: Request)-> StreamingResponse:
 
         metadata = {
             "token": token,
