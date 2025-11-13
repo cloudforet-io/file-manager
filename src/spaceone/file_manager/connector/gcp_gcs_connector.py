@@ -26,15 +26,15 @@ class GCPGCSConnector(FileBaseConnector):
     def _create_client(self):
         # GCP 인증 정보 설정
         # 1. 서비스 계정 키 JSON 문자열
-        
+
         # print(f"config: {self.config}")
-        
+
         service_account_key = self.config.get("service_account_key")
         decoded_key = base64.b64decode(service_account_key).decode('utf-8')
 
         # 2. 프로젝트 ID
         project_id = self.config.get("project_id")
-        
+
         if project_id is None:
             raise Exception("GCPGCSConnector configuration error: project_id is required")
         try:
@@ -44,7 +44,7 @@ class GCPGCSConnector(FileBaseConnector):
                 credentials = service_account.Credentials.from_service_account_info(
                     service_account_info
                 )
-                
+
                 # Storage 클라이언트 생성
                 self.client = storage.Client(
                     credentials=credentials,
@@ -64,29 +64,34 @@ class GCPGCSConnector(FileBaseConnector):
         self.bucket_name = bucket_name
 
     def check_file(self, resource_group: str, file_id: str):
+        """
+        GCS 파일 존재 여부 확인 (타임아웃 설정)
+        """
         if self.client is None:
             raise Exception("GCPGCSConnector not initialized properly")
-            
+
         try:
             object_name = self._generate_object_name(resource_group, file_id)
             bucket = self.client.bucket(self.bucket_name)
             blob = bucket.blob(object_name)
-            
-            # 파일 존재 여부 확인
-            return blob.exists()
+
+            # ✅ 파일 존재 여부 확인 (10초 타임아웃)
+            exists = blob.exists(timeout=10)
+            _LOGGER.debug(f"[check_file] File {object_name} exists: {exists}")
+            return exists
         except Exception as e:
-            _LOGGER.debug(f"[check_file] check_file error: {e}")
+            _LOGGER.debug(f"[check_file] Error checking file: {e}")
             return False
 
     def delete_file(self, resource_group: str, file_id: str):
         if self.client is None:
             raise Exception("GCPGCSConnector not initialized properly")
-            
+
         try:
             object_name = self._generate_object_name(resource_group, file_id)
             bucket = self.client.bucket(self.bucket_name)
             blob = bucket.blob(object_name)
-            
+
             # 파일 삭제
             blob.delete()
         except Exception as e:
@@ -94,7 +99,7 @@ class GCPGCSConnector(FileBaseConnector):
             raise e
 
     def upload_file(self, resource_group: str, file_id: str, data: bytes) -> None:
-        
+
         if self.client is None:
             raise Exception("GCPGCSConnector not initialized properly")
 
@@ -115,7 +120,10 @@ class GCPGCSConnector(FileBaseConnector):
             file_obj.close()
 
     def stream_upload_file(self, resource_group: str, file_id: str, file_obj) -> None:
-
+        """
+        GCS 스트리밍 업로드
+        upload_from_file을 사용하여 메모리 효율적으로 처리
+        """
         if self.client is None:
             raise Exception("GCPGCSConnector not initialized properly")
 
@@ -127,56 +135,49 @@ class GCPGCSConnector(FileBaseConnector):
 
             _LOGGER.info(f"[stream_upload_file] Starting upload to GCS: {object_name}")
 
-            # 청크 사이즈 설정 (8MB - GCS에서 권장하는 청크 사이즈)
-            chunk_size = 8 * 1024 * 1024  # 8MB
-            blob.chunk_size = chunk_size
+            # 청크 사이즈 설정 (8MB - GCS에서 권장)
+            blob.chunk_size = 8 * 1024 * 1024  # 8MB
 
             # 파일 객체 타입에 따른 처리
             if hasattr(file_obj, 'file'):
                 # FastAPI UploadFile 객체의 경우
                 _LOGGER.debug(f"[stream_upload_file] Detected FastAPI UploadFile object")
-
-                # 임시 파일로 스트리밍 처리
-                stream_buffer = BytesIO()
-                total_size = 0
-
-                # 청크 단위로 읽어서 GCS에 업로드
-                while True:
-                    chunk = file_obj.file.read(chunk_size)
-                    if not chunk:
-                        break
-                    stream_buffer.write(chunk)
-                    total_size += len(chunk)
-
-                    # 진행률 로깅 (10MB마다)
-                    if total_size % (10 * 1024 * 1024) == 0 and total_size > 0:
-                        _LOGGER.info(f"[stream_upload_file] Uploaded {total_size // (1024*1024)}MB")
-
-                # 스트림 버퍼를 처음으로 리셋하고 업로드
-                stream_buffer.seek(0)
-
-                # 업로드 시간 측정
-                start_time = time.time()
-                blob.upload_from_file(
-                    stream_buffer,
-                    content_type=getattr(file_obj, 'content_type', 'application/octet-stream'),
-                    timeout=300  # 5분 타임아웃
-                )
-                upload_time = time.time() - start_time
-                stream_buffer.close()
-                _LOGGER.info(f"[stream_upload_file] Upload completed. Size: {total_size // (1024*1024)}MB, Time: {upload_time:.2f}s")
+                file_stream = file_obj.file
+                content_type = getattr(file_obj, 'content_type', 'application/octet-stream')
             else:
                 # 일반 파일 객체의 경우
                 _LOGGER.debug(f"[stream_upload_file] Detected standard file object")
-                start_time = time.time()
-                blob.upload_from_file(file_obj, timeout=300)
-                upload_time = time.time() - start_time
+                file_stream = file_obj
+                content_type = 'application/octet-stream'
+
+            # 업로드 시간 측정
+            start_time = time.time()
+
+            # GCS 클라이언트가 자동으로 스트리밍 처리
+            blob.upload_from_file(
+                file_stream,
+                content_type=content_type,
+                timeout=600,  # 10분 타임아웃
+                rewind=True   # 필요시 파일 포인터 초기화
+            )
+
+            upload_time = time.time() - start_time
+
+            # 파일 크기 정보 로깅
+            if blob.size:
+                _LOGGER.info(f"[stream_upload_file] Upload completed. Size: {blob.size // (1024*1024)}MB, Time: {upload_time:.2f}s")
+            else:
                 _LOGGER.info(f"[stream_upload_file] Upload completed in {upload_time:.2f}s")
+
         except Exception as e:
             _LOGGER.error(f'[stream_upload_file] Error: {e}')
             raise e
 
     def download_file(self, resource_group: str, file_id: str):
+        """
+        GCS 파일 다운로드 (스트리밍)
+        타임아웃 설정으로 무한 대기 방지
+        """
         if self.client is None:
             raise Exception("GCPGCSConnector not initialized properly")
 
@@ -185,14 +186,37 @@ class GCPGCSConnector(FileBaseConnector):
         try:
             bucket = self.client.bucket(self.bucket_name)
             blob = bucket.blob(object_name)
-            # 파일 메타데이터 새로고침 (크기 정보 가져오기)
-            blob.reload()
-            # 파일 다운로드
-            file_data = blob.download_as_bytes()
+
+            # ✅ 파일 메타데이터 새로고침 (타임아웃 설정)
+            _LOGGER.info(f"[download_file] Fetching metadata for {object_name}")
+            blob.reload(timeout=30)  # 30초 타임아웃
+
+            # ✅ 파일 크기 확인
+            file_size = blob.size
+            if file_size is None:
+                raise ValueError(f"Cannot determine file size for {object_name}")
+
+            _LOGGER.info(f"[download_file] Downloading {file_size // (1024*1024)}MB from GCS")
+
+            # ✅ 스트리밍 다운로드 (대용량 파일 지원)
+            # blob.open()은 스트림을 직접 반환하므로 메모리 효율적
+            def stream_download():
+                """스트리밍으로 파일 다운로드"""
+                try:
+                    with blob.open("rb", timeout=600) as f:  # 10분 타임아웃
+                        while True:
+                            chunk = f.read(1024 * 1024)  # 1MB씩 읽기
+                            if not chunk:
+                                break
+                            yield chunk
+                except Exception as e:
+                    _LOGGER.error(f"[download_file] Stream error: {e}")
+                    raise
+
             # AWS S3 스타일 응답 형식으로 반환
             return {
-                'Body': BytesIO(file_data),
-                'ContentLength': blob.size
+                'Body': stream_download(),
+                'ContentLength': file_size
             }
         except Exception as e:
             _LOGGER.error(f'[download_file] Error: {e}')
@@ -211,4 +235,4 @@ class GCPGCSConnector(FileBaseConnector):
         elif resource_group == "USER":
             return f"/files/user/{file_id}"
         else:
-            return f"/files/unknown/{file_id}" 
+            return f"/files/unknown/{file_id}"
