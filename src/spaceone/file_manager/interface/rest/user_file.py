@@ -27,7 +27,7 @@ class UserFiles(BaseAPI):
 
     @router.post("/user/upload")
     @exception_handler
-    def upload_user_file(self, request: Request, file: UploadFile = File(...)):
+    async def upload_user_file(self, request: Request, file: UploadFile = File(...)):
 
         metadata = {
             "token": self.token.credentials,
@@ -41,7 +41,7 @@ class UserFiles(BaseAPI):
 
     @router.get("/user/{file_id}")
     @exception_handler
-    def download_user_file(self, file_id:str, token:str,  request: Request):
+    async def download_user_file(self, file_id:str, token:str,  request: Request):
 
         metadata = {
             "token": token,
