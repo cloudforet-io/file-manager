@@ -2,3 +2,7 @@ spaceone-api
 python-multipart
 minio
 google-cloud-storage
+
+# 비동기 라이브러리 (스트리밍 업로드/다운로드용)
+aioboto3>=11.0.0
+aiofiles>=23.0.0
