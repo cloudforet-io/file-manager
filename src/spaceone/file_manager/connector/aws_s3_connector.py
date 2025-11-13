@@ -117,8 +117,8 @@ class AWSS3Connector(FileBaseConnector):
             callback = self._create_progress_callback(object_name)
 
             content_type = getattr(file_obj, 'content_type', 'application/octet-stream')
-                if content_type is None:
-                    content_type = 'application/octet-stream'
+            if content_type is None:
+                content_type = 'application/octet-stream'
 
             self.client.upload_fileobj(
                 file_stream,
