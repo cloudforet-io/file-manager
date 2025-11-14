@@ -17,7 +17,7 @@ import os
 from setuptools import setup, find_packages
 
 setup(
-    name="spaceone-file-manager",
+    name="spaceone_file_manager",
     version=os.environ.get("PACKAGE_VERSION"),
     description="SpaceONE file manager service",
     long_description="",
